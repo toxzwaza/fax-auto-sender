@@ -34,7 +34,7 @@ def send_fax_simple(file_url, fax_number):
     if not check_file_exists(file_url):
         return False
     
-    url = "http://localhost:5000/send_fax"
+    url = "http://monokanri-manage.local:5000/send_fax"
     
     data = {
         "file_url": file_url,

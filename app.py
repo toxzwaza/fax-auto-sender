@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import requests
 import os
 import json
@@ -9,6 +10,9 @@ from datetime import datetime
 from fax_sender import send_fax_with_retry, cleanup_temp_files
 
 app = Flask(__name__)
+CORS(app) # すべてのオリジンを許可
+# CORS(app, resources={r"/send_fax": {"origins": "http://monokanri-manage.local"}})
+# CORS(app, resources={r"/send_fax": {"origins": "http://127.0.0.1:8000"}})
 
 # 設定
 PARAMETER_FILE = "parameter.json"
