@@ -1,4 +1,3 @@
-import win32print
 import win32api
 import os
 import requests
@@ -6,6 +5,10 @@ import tempfile
 import threading
 from datetime import datetime
 import json
+import time
+import pygetwindow as gw
+import pyautogui
+from pywinauto.application import Application
 from logger import fax_logger
 
 class FaxService:
@@ -87,9 +90,12 @@ class FaxService:
             raise
     
     def send_fax(self, fax_number, file_url, job_id=None):
-        """FAX送信を実行"""
+        """FAX送信を実行（pywinauto使用）"""
         if job_id is None:
             job_id = f"fax_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        file_path = None
+        is_temp_file = False
         
         try:
             # ログに記録
@@ -104,43 +110,64 @@ class FaxService:
             # ファイルをダウンロード
             file_path = self.download_file(file_url)
             
+            # ローカルファイル以外は一時ファイルとして削除対象
+            if not file_url.startswith('file:///'):
+                is_temp_file = True
+            
+            # FAXダイアログを開く
+            self.emit_status('connecting', 'FAXダイアログを起動中...')
+            win32api.ShellExecute(0, "printto", file_path, f'"{self.printer_name}"', ".", 1)
+            time.sleep(3.5)
+            
             try:
-                # プリンタハンドルを取得
-                self.emit_status('connecting', 'FAXドライバーに接続中...')
-                printer = win32print.OpenPrinter(self.printer_name)
+                # 「ファクス送信」ウィンドウに接続
+                self.emit_status('printing', 'FAX送信ダイアログに接続中...')
+                app = Application(backend="uia").connect(title_re=".*ファクス送信の設定.*", timeout=10)
+                dlg = app.window(title_re=".*ファクス送信の設定.*")
                 
-                try:
-                    # 印刷ジョブを開始
-                    self.emit_status('printing', '印刷ジョブを開始中...')
-                    hJob = win32print.StartDocPrinter(printer, 1, (f"FAX送信_{job_id}", None, "RAW"))
-                    win32print.StartPagePrinter(printer)
-
-                    # ファイルを送信
-                    self.emit_status('sending', f'FAX番号 {fax_number} に送信中...')
-                    with open(file_path, "rb") as f:
-                        win32print.WritePrinter(printer, f.read())
-
-                    win32print.EndPagePrinter(printer)
-                    win32print.EndDocPrinter(printer)
-                    
-                    # ログに記録
-                    fax_logger.log_fax_complete(job_id, fax_number)
-                    
-                    self.emit_status('completed', f'FAX送信完了 (ジョブID: {job_id})', {
-                        'job_id': job_id,
-                        'fax_number': fax_number,
-                        'completed_at': datetime.now().isoformat()
-                    })
-                    
-                finally:
-                    win32print.ClosePrinter(printer)
-                    
-            finally:
-                # 一時ファイルを削除
-                try:
-                    os.unlink(file_path)
-                except:
-                    pass
+                # 宛先番号入力（ハイフンを除去）
+                self.emit_status('sending', f'FAX番号 {fax_number} を入力中...')
+                clean_fax_number = fax_number.replace('-', '').replace(' ', '')
+                
+                edit_box = dlg.child_window(title_re=".*宛先番号.*", control_type="Edit")
+                edit_box.set_focus()
+                edit_box.type_keys(clean_fax_number, with_spaces=True)
+                print(f"宛先番号 {clean_fax_number} を入力しました。")
+                
+                time.sleep(0.8)
+                
+                # 「送信開始」クリック
+                self.emit_status('sending', 'FAX送信を開始中...')
+                dlg.child_window(title="送信開始", control_type="Button").click_input()
+                print("『送信開始』ボタンをクリックしました。")
+                
+                # 警告ダイアログを処理
+                print("警告ウィンドウを探索中...")
+                for i in range(10):  # 最大5秒間スキャン
+                    warning_windows = [w for w in gw.getAllTitles() if "警告" in w]
+                    if warning_windows:
+                        print(f"警告ウィンドウ検出: {warning_windows[0]}")
+                        win = gw.getWindowsWithTitle(warning_windows[0])[0]
+                        win.activate()
+                        time.sleep(0.5)
+                        pyautogui.press("enter")  # OKを押す
+                        print("『OK』を自動クリックしました。")
+                        break
+                    time.sleep(0.5)
+                else:
+                    print("⚠ 警告ダイアログが見つかりませんでした。")
+                
+                # ログに記録
+                fax_logger.log_fax_complete(job_id, fax_number)
+                
+                self.emit_status('completed', f'FAX送信完了 (ジョブID: {job_id})', {
+                    'job_id': job_id,
+                    'fax_number': fax_number,
+                    'completed_at': datetime.now().isoformat()
+                })
+                
+            except Exception as e:
+                raise Exception(f"FAXダイアログ操作エラー: {str(e)}")
                     
         except Exception as e:
             # エラーログに記録
@@ -151,6 +178,14 @@ class FaxService:
                 'error': str(e)
             })
             raise
+        
+        finally:
+            # 一時ファイルを削除
+            if is_temp_file and file_path:
+                try:
+                    os.unlink(file_path)
+                except:
+                    pass
     
     def send_fax_async(self, fax_number, file_url, job_id=None):
         """非同期でFAX送信を実行"""

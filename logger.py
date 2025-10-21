@@ -51,3 +51,4 @@ class FaxLogger:
 # グローバルロガーインスタンス
 fax_logger = FaxLogger()
 
+
