@@ -301,11 +301,27 @@
         function getFileInfo(fileUrl, requestId) {
             if (fileUrl.startsWith('file://')) {
                 const fileName = fileUrl.split('/').pop();
-                return `<a href="/view_file/${requestId}" target="_blank" class="file-link">📁 ${fileName}</a>`;
+                return `<a href="/view_file/${requestId}" target="_blank" class="file-link" onclick="handleFileClick(event, '${requestId}')">📁 ${fileName}</a>`;
             } else {
                 const url = new URL(fileUrl);
                 return `<a href="${fileUrl}" target="_blank" class="file-link">🌐 ${url.hostname}${url.pathname}</a>`;
             }
+        }
+        
+        // ファイルクリック時のエラーハンドリング
+        function handleFileClick(event, requestId) {
+            // ファイルが存在しない場合のエラーハンドリング
+            fetch(`/view_file/${requestId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        event.preventDefault();
+                        alert('ファイルが見つかりません。ファイルが削除されている可能性があります。');
+                    }
+                })
+                .catch(error => {
+                    event.preventDefault();
+                    alert('ファイルの読み込み中にエラーが発生しました。');
+                });
         }
         
         // 日時をフォーマット

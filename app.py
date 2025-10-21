@@ -184,17 +184,8 @@ def process_single_fax_request(request_data):
         except:
             pass
         
-        # アップロードされたファイルもクリーンアップ（オプション）
-        if file_url.startswith('file://'):
-            try:
-                uploaded_file_path = file_url[7:]
-                if uploaded_file_path.startswith('/'):
-                    uploaded_file_path = uploaded_file_path[1:]
-                if os.path.exists(uploaded_file_path) and uploaded_file_path.startswith(UPLOAD_FOLDER):
-                    os.remove(uploaded_file_path)
-                    print(f"アップロードファイルをクリーンアップしました: {uploaded_file_path}")
-            except:
-                pass
+        # アップロードされたファイルはクリーンアップしない（表示用に保持）
+        # 必要に応じて手動でクリーンアップする
 
 # -------------------------------
 # ワーカースレッド
@@ -442,7 +433,8 @@ def view_file(request_id):
                         from flask import Response
                         return Response(file_content, mimetype=content_type)
                     else:
-                        return jsonify({'success': False, 'error': 'ファイルが見つかりません'}), 404
+                        print(f"ファイルが見つかりません: {local_file_path}")
+                        return jsonify({'success': False, 'error': f'ファイルが見つかりません: {os.path.basename(local_file_path)}'}), 404
                 
                 # URLファイルの場合
                 else:
