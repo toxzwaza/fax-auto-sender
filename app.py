@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import requests
 import os
@@ -307,9 +307,152 @@ def get_all_requests():
 def health():
     return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
 
-# -------------------------------
-# メイン処理
-# -------------------------------
+@app.route('/', methods=['GET'])
+def admin():
+    """管理画面を表示"""
+    return render_template('admin.html')
+
+@app.route('/clear_completed', methods=['POST'])
+def clear_completed():
+    """完了済みの送信履歴を削除"""
+    try:
+        params_list = load_parameters()
+        if not isinstance(params_list, list):
+            return jsonify({'success': False, 'error': 'パラメータデータが配列ではありません'}), 400
+        
+        # 完了済み（status=1）のリクエストを除外
+        filtered_list = [r for r in params_list if r.get("status") != 1]
+        deleted_count = len(params_list) - len(filtered_list)
+        
+        save_parameters(filtered_list)
+        
+        return jsonify({
+            'success': True, 
+            'message': f'{deleted_count}件の完了済み送信履歴を削除しました',
+            'deleted_count': deleted_count
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/retry_errors', methods=['POST'])
+def retry_errors():
+    """エラー状態の送信を再送"""
+    try:
+        params_list = load_parameters()
+        if not isinstance(params_list, list):
+            return jsonify({'success': False, 'error': 'パラメータデータが配列ではありません'}), 400
+        
+        # エラー状態（status=-1）のリクエストを待機中（status=0）に変更
+        retry_count = 0
+        for request in params_list:
+            if request.get("status") == -1:
+                request["status"] = 0
+                request["updated_at"] = datetime.now().isoformat()
+                request["error_message"] = None
+                retry_count += 1
+        
+        save_parameters(params_list)
+        
+        return jsonify({
+            'success': True, 
+            'message': f'{retry_count}件のエラー送信を再送しました',
+            'retry_count': retry_count
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/retry_request/<request_id>', methods=['POST'])
+def retry_request(request_id):
+    """個別の送信を再送"""
+    try:
+        params_list = load_parameters()
+        if not isinstance(params_list, list):
+            return jsonify({'success': False, 'error': 'パラメータデータが配列ではありません'}), 400
+        
+        # 指定されたIDのリクエストを探して再送
+        for request in params_list:
+            if request.get("id") == request_id:
+                if request.get("status") == -1:  # エラー状態の場合のみ
+                    request["status"] = 0
+                    request["updated_at"] = datetime.now().isoformat()
+                    request["error_message"] = None
+                    save_parameters(params_list)
+                    return jsonify({'success': True, 'message': '送信を再送しました'})
+                else:
+                    return jsonify({'success': False, 'error': 'エラー状態の送信のみ再送可能です'}), 400
+        
+        return jsonify({'success': False, 'error': '該当する送信が見つかりません'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/clear_all', methods=['POST'])
+def clear_all():
+    """すべての送信履歴を削除"""
+    try:
+        params_list = load_parameters()
+        total_count = len(params_list) if isinstance(params_list, list) else 0
+        
+        save_parameters([])
+        
+        return jsonify({
+            'success': True, 
+            'message': f'{total_count}件の送信履歴をすべて削除しました',
+            'deleted_count': total_count
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/view_file/<request_id>', methods=['GET'])
+def view_file(request_id):
+    """ファイルを表示"""
+    try:
+        params_list = load_parameters()
+        if not isinstance(params_list, list):
+            return jsonify({'success': False, 'error': 'パラメータデータが配列ではありません'}), 400
+        
+        # 指定されたIDのリクエストを探す
+        for request in params_list:
+            if request.get("id") == request_id:
+                file_url = request.get("file_url")
+                if not file_url:
+                    return jsonify({'success': False, 'error': 'ファイルURLが見つかりません'}), 404
+                
+                # ローカルファイルの場合
+                if file_url.startswith('file://'):
+                    local_file_path = file_url[7:]
+                    if local_file_path.startswith('/'):
+                        local_file_path = local_file_path[1:]
+                    
+                    if os.path.exists(local_file_path):
+                        # ファイルの拡張子に応じて適切なContent-Typeを設定
+                        ext = os.path.splitext(local_file_path)[1].lower()
+                        content_types = {
+                            '.pdf': 'application/pdf',
+                            '.png': 'image/png',
+                            '.jpg': 'image/jpeg',
+                            '.jpeg': 'image/jpeg',
+                            '.tiff': 'image/tiff',
+                            '.tif': 'image/tiff'
+                        }
+                        content_type = content_types.get(ext, 'application/octet-stream')
+                        
+                        with open(local_file_path, 'rb') as f:
+                            file_content = f.read()
+                        
+                        from flask import Response
+                        return Response(file_content, mimetype=content_type)
+                    else:
+                        return jsonify({'success': False, 'error': 'ファイルが見つかりません'}), 404
+                
+                # URLファイルの場合
+                else:
+                    # URLをそのまま返す（リダイレクト）
+                    from flask import redirect
+                    return redirect(file_url)
+        
+        return jsonify({'success': False, 'error': '該当する送信が見つかりません'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':
     worker_thread = threading.Thread(target=fax_worker, daemon=True)
