@@ -7,6 +7,7 @@ import time
 import threading
 import uuid
 from datetime import datetime
+from werkzeug.utils import secure_filename
 from fax_sender import send_fax_with_retry, cleanup_temp_files
 
 app = Flask(__name__)
@@ -16,6 +17,12 @@ CORS(app) # すべてのオリジンを許可
 
 # 設定
 PARAMETER_FILE = "parameter.json"
+UPLOAD_FOLDER = "uploads"
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'tiff', 'tif'}
+
+# アップロードフォルダを作成
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
 # グローバルロックを定義（FAX送信中の並列実行を防止）
 fax_lock = threading.Lock()
@@ -92,6 +99,26 @@ def update_request_status(request_id, status, error_message=None):
 # ファイル処理
 # -------------------------------
 
+def allowed_file(filename):
+    """ファイル拡張子をチェック"""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def save_uploaded_file(file):
+    """アップロードされたファイルを保存"""
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        # タイムスタンプを追加してファイル名の重複を避ける
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        name, ext = os.path.splitext(filename)
+        unique_filename = f"{name}_{timestamp}{ext}"
+        
+        file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
+        file.save(file_path)
+        print(f"ファイルをアップロードしました: {file_path}")
+        return file_path
+    return None
+
 def download_file(file_url, local_path):
     """ファイルをダウンロードまたはローカルコピー"""
     try:
@@ -156,6 +183,18 @@ def process_single_fax_request(request_data):
             os.remove(local_file_path)
         except:
             pass
+        
+        # アップロードされたファイルもクリーンアップ（オプション）
+        if file_url.startswith('file://'):
+            try:
+                uploaded_file_path = file_url[7:]
+                if uploaded_file_path.startswith('/'):
+                    uploaded_file_path = uploaded_file_path[1:]
+                if os.path.exists(uploaded_file_path) and uploaded_file_path.startswith(UPLOAD_FOLDER):
+                    os.remove(uploaded_file_path)
+                    print(f"アップロードファイルをクリーンアップしました: {uploaded_file_path}")
+            except:
+                pass
 
 # -------------------------------
 # ワーカースレッド
@@ -194,7 +233,7 @@ def fax_worker():
 
 @app.route('/send_fax', methods=['POST'])
 def send_fax_api():
-    """FAX送信API"""
+    """FAX送信API（URL指定）"""
     try:
         data = request.get_json()
         file_url = data.get('file_url')
@@ -209,6 +248,42 @@ def send_fax_api():
             'message': 'FAX送信リクエストを登録しました',
             'request_id': new_request['id'],
             'status': 'pending'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/upload_and_send_fax', methods=['POST'])
+def upload_and_send_fax():
+    """ファイルアップロード＆FAX送信API"""
+    try:
+        # ファイルの確認
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': 'ファイルが選択されていません'}), 400
+        
+        file = request.files['file']
+        fax_number = request.form.get('fax_number')
+        
+        if not fax_number:
+            return jsonify({'success': False, 'error': 'fax_numberは必須です'}), 400
+        
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'ファイルが選択されていません'}), 400
+        
+        # ファイルを保存
+        file_path = save_uploaded_file(file)
+        if not file_path:
+            return jsonify({'success': False, 'error': 'サポートされていないファイル形式です'}), 400
+        
+        # ローカルファイルURLとして登録
+        file_url = f"file:///{file_path.replace(os.sep, '/')}"
+        new_request = add_fax_request(file_url, fax_number)
+        
+        return jsonify({
+            'success': True,
+            'message': 'ファイルをアップロードし、FAX送信リクエストを登録しました',
+            'request_id': new_request['id'],
+            'status': 'pending',
+            'uploaded_file': file_path
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
