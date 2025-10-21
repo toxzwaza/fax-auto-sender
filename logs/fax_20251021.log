@@ -1,0 +1,120 @@
+2025-10-21 11:13:24,801 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.51:5000
+2025-10-21 11:13:24,802 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-10-21 11:13:27,180 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:13:27] "GET / HTTP/1.1" 200 -
+2025-10-21 11:13:27,240 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:13:27] "GET /socket.io/?EIO=4&transport=polling&t=Pe4YlP6 HTTP/1.1" 200 -
+2025-10-21 11:13:27,442 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:13:27] "POST /socket.io/?EIO=4&transport=polling&t=Pe4YlQI&sid=cb6PExjMcn2CNraJAAAA HTTP/1.1" 200 -
+2025-10-21 11:13:27,619 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:13:27] "GET /socket.io/?EIO=4&transport=polling&t=Pe4YlQJ&sid=cb6PExjMcn2CNraJAAAA HTTP/1.1" 200 -
+2025-10-21 11:13:27,635 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:13:27] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-10-21 11:13:27,636 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:13:27] "GET /api/jobs HTTP/1.1" 200 -
+2025-10-21 11:13:35,884 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:13:35] "GET /admin HTTP/1.1" 200 -
+2025-10-21 11:13:35,919 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:13:35] "GET /socket.io/?EIO=4&transport=websocket&sid=cb6PExjMcn2CNraJAAAA HTTP/1.1" 200 -
+2025-10-21 11:13:36,001 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:13:36] "GET /socket.io/?EIO=4&transport=polling&t=Pe4YnWM HTTP/1.1" 200 -
+2025-10-21 11:13:36,139 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:13:36] "GET /api/admin/statistics HTTP/1.1" 200 -
+2025-10-21 11:13:36,245 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:13:36] "POST /socket.io/?EIO=4&transport=polling&t=Pe4YnY3&sid=iV2bM6w-q-4gSXsPAAAC HTTP/1.1" 200 -
+2025-10-21 11:13:36,245 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:13:36] "GET /api/admin/history?page=1&per_page=20&status= HTTP/1.1" 200 -
+2025-10-21 11:13:36,312 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:13:36] "GET /socket.io/?EIO=4&transport=polling&t=Pe4YnY4&sid=iV2bM6w-q-4gSXsPAAAC HTTP/1.1" 200 -
+2025-10-21 11:13:36,316 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:13:36] "GET /socket.io/?EIO=4&transport=polling&t=Pe4Yncw&sid=iV2bM6w-q-4gSXsPAAAC HTTP/1.1" 200 -
+2025-10-21 11:20:06,966 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:20:06] "GET / HTTP/1.1" 200 -
+2025-10-21 11:20:06,981 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:20:06] "GET /socket.io/?EIO=4&transport=websocket&sid=iV2bM6w-q-4gSXsPAAAC HTTP/1.1" 200 -
+2025-10-21 11:20:07,035 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:20:07] "GET /socket.io/?EIO=4&transport=polling&t=Pe4aG-- HTTP/1.1" 200 -
+2025-10-21 11:20:07,213 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:20:07] "GET /api/jobs HTTP/1.1" 200 -
+2025-10-21 11:20:07,295 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:20:07] "POST /socket.io/?EIO=4&transport=polling&t=Pe4aG_y&sid=yhCTDEmfJL1yellmAAAE HTTP/1.1" 200 -
+2025-10-21 11:20:07,341 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:20:07] "GET /socket.io/?EIO=4&transport=polling&t=Pe4aG_z&sid=yhCTDEmfJL1yellmAAAE HTTP/1.1" 200 -
+2025-10-21 11:20:46,188 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:20:46] "GET /admin HTTP/1.1" 200 -
+2025-10-21 11:20:46,206 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:20:46] "GET /socket.io/?EIO=4&transport=websocket&sid=yhCTDEmfJL1yellmAAAE HTTP/1.1" 200 -
+2025-10-21 11:20:46,491 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:20:46] "GET /socket.io/?EIO=4&transport=polling&t=Pe4aQZr HTTP/1.1" 200 -
+2025-10-21 11:20:46,516 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:20:46] "GET /api/admin/history?page=1&per_page=20&status= HTTP/1.1" 200 -
+2025-10-21 11:20:46,517 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:20:46] "GET /api/admin/statistics HTTP/1.1" 200 -
+2025-10-21 11:20:46,808 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:20:46] "POST /socket.io/?EIO=4&transport=polling&t=Pe4aQeT&sid=flzopNU0bGqxdFUOAAAG HTTP/1.1" 200 -
+2025-10-21 11:20:46,809 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:20:46] "GET /socket.io/?EIO=4&transport=polling&t=Pe4aQeT.0&sid=flzopNU0bGqxdFUOAAAG HTTP/1.1" 200 -
+2025-10-21 11:26:29,913 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.51:5000
+2025-10-21 11:26:29,913 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-10-21 11:26:29,943 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:29] "GET /socket.io/?EIO=4&transport=polling&t=Pe4bkL_ HTTP/1.1" 200 -
+2025-10-21 11:26:30,183 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:30] "POST /socket.io/?EIO=4&transport=polling&t=Pe4bkUw&sid=9JIT1NNdOwJmKB9kAAAA HTTP/1.1" 200 -
+2025-10-21 11:26:30,259 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:30] "GET /socket.io/?EIO=4&transport=polling&t=Pe4bkUw.0&sid=9JIT1NNdOwJmKB9kAAAA HTTP/1.1" 200 -
+2025-10-21 11:26:30,262 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:30] "GET /socket.io/?EIO=4&transport=polling&t=Pe4bkZr&sid=9JIT1NNdOwJmKB9kAAAA HTTP/1.1" 200 -
+2025-10-21 11:26:31,972 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:31] "GET /admin HTTP/1.1" 200 -
+2025-10-21 11:26:31,978 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:31] "GET /socket.io/?EIO=4&transport=websocket&sid=9JIT1NNdOwJmKB9kAAAA HTTP/1.1" 200 -
+2025-10-21 11:26:31,987 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:31] "GET /socket.io/?EIO=4&transport=polling&t=Pe4bk-m HTTP/1.1" 200 -
+2025-10-21 11:26:32,226 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:32] "GET / HTTP/1.1" 200 -
+2025-10-21 11:26:32,306 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:32] "POST /socket.io/?EIO=4&transport=polling&t=Pe4bk-s&sid=t7ehL33lG2Rg_xN8AAAC HTTP/1.1" 200 -
+2025-10-21 11:26:32,306 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:32] "GET /socket.io/?EIO=4&transport=polling&t=Pe4bk-s.0&sid=t7ehL33lG2Rg_xN8AAAC HTTP/1.1" 200 -
+2025-10-21 11:26:32,308 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:32] "GET /api/admin/statistics HTTP/1.1" 200 -
+2025-10-21 11:26:32,324 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:32] "GET /api/admin/history?page=1&per_page=20&status= HTTP/1.1" 200 -
+2025-10-21 11:26:32,548 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:32] "GET /socket.io/?EIO=4&transport=polling&t=Pe4bl2m HTTP/1.1" 200 -
+2025-10-21 11:26:32,616 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:32] "GET /api/jobs HTTP/1.1" 200 -
+2025-10-21 11:26:32,855 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:32] "POST /socket.io/?EIO=4&transport=polling&t=Pe4bl7b&sid=OG00mPJFhC_GHndZAAAE HTTP/1.1" 200 -
+2025-10-21 11:26:32,856 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:32] "GET /socket.io/?EIO=4&transport=polling&t=Pe4bl7c&sid=OG00mPJFhC_GHndZAAAE HTTP/1.1" 200 -
+2025-10-21 11:26:36,132 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:36] "[35m[1mPOST /api/test_send HTTP/1.1[0m" 500 -
+2025-10-21 11:26:43,506 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:43] "[35m[1mPOST /api/test_send HTTP/1.1[0m" 500 -
+2025-10-21 11:26:45,390 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:45] "GET /admin HTTP/1.1" 200 -
+2025-10-21 11:26:45,419 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:45] "GET /socket.io/?EIO=4&transport=websocket&sid=OG00mPJFhC_GHndZAAAE HTTP/1.1" 200 -
+2025-10-21 11:26:45,482 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:45] "GET /socket.io/?EIO=4&transport=polling&t=Pe4boGM HTTP/1.1" 200 -
+2025-10-21 11:26:45,650 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:45] "GET /api/admin/statistics HTTP/1.1" 200 -
+2025-10-21 11:26:45,742 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:45] "POST /socket.io/?EIO=4&transport=polling&t=Pe4boHh&sid=hRsU4lQhQ4rklI1nAAAG HTTP/1.1" 200 -
+2025-10-21 11:26:45,742 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:45] "GET /api/admin/history?page=1&per_page=20&status= HTTP/1.1" 200 -
+2025-10-21 11:26:45,788 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:45] "GET /socket.io/?EIO=4&transport=polling&t=Pe4boHi&sid=hRsU4lQhQ4rklI1nAAAG HTTP/1.1" 200 -
+2025-10-21 11:26:45,791 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:45] "GET /socket.io/?EIO=4&transport=polling&t=Pe4boMU&sid=hRsU4lQhQ4rklI1nAAAG HTTP/1.1" 200 -
+2025-10-21 11:26:48,260 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:48] "GET / HTTP/1.1" 200 -
+2025-10-21 11:26:48,275 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:48] "GET /socket.io/?EIO=4&transport=websocket&sid=hRsU4lQhQ4rklI1nAAAG HTTP/1.1" 200 -
+2025-10-21 11:26:48,344 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:48] "GET /socket.io/?EIO=4&transport=polling&t=Pe4bozB HTTP/1.1" 200 -
+2025-10-21 11:26:48,514 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:48] "GET /api/jobs HTTP/1.1" 200 -
+2025-10-21 11:26:48,594 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:48] "POST /socket.io/?EIO=4&transport=polling&t=Pe4bo-Q&sid=LVWZ61IPZ3pGhvg9AAAI HTTP/1.1" 200 -
+2025-10-21 11:26:48,659 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:48] "GET /socket.io/?EIO=4&transport=polling&t=Pe4bo-R&sid=LVWZ61IPZ3pGhvg9AAAI HTTP/1.1" 200 -
+2025-10-21 11:26:48,662 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:26:48] "GET /socket.io/?EIO=4&transport=polling&t=Pe4bp3L&sid=LVWZ61IPZ3pGhvg9AAAI HTTP/1.1" 200 -
+2025-10-21 11:27:30,339 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:27:30] "[35m[1mPOST /api/test_send HTTP/1.1[0m" 500 -
+2025-10-21 11:27:59,969 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:27:59] "GET /socket.io/?EIO=4&transport=websocket&sid=LVWZ61IPZ3pGhvg9AAAI HTTP/1.1" 200 -
+2025-10-21 11:30:01,679 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.51:5000
+2025-10-21 11:30:01,679 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-10-21 11:30:03,328 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:03] "GET /socket.io/?EIO=4&transport=polling&t=Pe4cYWA HTTP/1.1" 200 -
+2025-10-21 11:30:03,588 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:03] "POST /socket.io/?EIO=4&transport=polling&t=Pe4cYb1&sid=SL96rhv5Yuj8MZsLAAAA HTTP/1.1" 200 -
+2025-10-21 11:30:03,634 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:03] "GET /socket.io/?EIO=4&transport=polling&t=Pe4cYb2&sid=SL96rhv5Yuj8MZsLAAAA HTTP/1.1" 200 -
+2025-10-21 11:30:03,637 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:03] "GET /socket.io/?EIO=4&transport=polling&t=Pe4cYfq&sid=SL96rhv5Yuj8MZsLAAAA HTTP/1.1" 200 -
+2025-10-21 11:30:04,086 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:04] "GET / HTTP/1.1" 200 -
+2025-10-21 11:30:06,073 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:06] "GET /socket.io/?EIO=4&transport=polling&t=Pe4cZFt HTTP/1.1" 200 -
+2025-10-21 11:30:06,076 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:06] "POST /socket.io/?EIO=4&transport=polling&t=Pe4cZFw&sid=jmmNJtpb7DJ2fjZhAAAC HTTP/1.1" 200 -
+2025-10-21 11:30:06,382 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:06] "GET /socket.io/?EIO=4&transport=polling&t=Pe4cZFx&sid=jmmNJtpb7DJ2fjZhAAAC HTTP/1.1" 200 -
+2025-10-21 11:30:07,537 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:07] "GET / HTTP/1.1" 200 -
+2025-10-21 11:30:07,552 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:07] "GET /socket.io/?EIO=4&transport=polling&t=Pe4cZc- HTTP/1.1" 200 -
+2025-10-21 11:30:07,790 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:07] "POST /socket.io/?EIO=4&transport=polling&t=Pe4cZd-&sid=ENylNZUreRMQi1gaAAAE HTTP/1.1" 200 -
+2025-10-21 11:30:07,931 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:07] "GET /socket.io/?EIO=4&transport=polling&t=Pe4cZd_&sid=ENylNZUreRMQi1gaAAAE HTTP/1.1" 200 -
+2025-10-21 11:30:07,934 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:07] "GET /api/jobs HTTP/1.1" 200 -
+2025-10-21 11:30:08,691 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:08] "GET /socket.io/?EIO=4&transport=websocket&sid=SL96rhv5Yuj8MZsLAAAA HTTP/1.1" 200 -
+2025-10-21 11:30:09,889 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:09] "GET /socket.io/?EIO=4&transport=websocket&sid=jmmNJtpb7DJ2fjZhAAAC HTTP/1.1" 200 -
+2025-10-21 11:30:11,157 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:11] "POST /api/test_send HTTP/1.1" 200 -
+2025-10-21 11:30:17,782 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:17] "GET /admin HTTP/1.1" 200 -
+2025-10-21 11:30:17,788 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:17] "GET /socket.io/?EIO=4&transport=websocket&sid=ENylNZUreRMQi1gaAAAE HTTP/1.1" 200 -
+2025-10-21 11:30:18,100 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:18] "GET /socket.io/?EIO=4&transport=polling&t=Pe4cc70 HTTP/1.1" 200 -
+2025-10-21 11:30:18,123 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:18] "GET /api/admin/history?page=1&per_page=20&status= HTTP/1.1" 200 -
+2025-10-21 11:30:18,124 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:18] "GET /api/admin/statistics HTTP/1.1" 200 -
+2025-10-21 11:30:18,416 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:18] "POST /socket.io/?EIO=4&transport=polling&t=Pe4ccBr&sid=sAxTvAD6XydgwiQ1AAAG HTTP/1.1" 200 -
+2025-10-21 11:30:18,417 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:18] "GET /socket.io/?EIO=4&transport=polling&t=Pe4ccBs&sid=sAxTvAD6XydgwiQ1AAAG HTTP/1.1" 200 -
+2025-10-21 11:30:41,404 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:30:41] "GET /api/admin/job/a0f44d85-ff59-45fd-b8a0-11f5c6faa671/status_history HTTP/1.1" 200 -
+2025-10-21 11:32:40,053 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.51:5000
+2025-10-21 11:32:40,054 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-10-21 11:32:40,206 - FaxService - INFO - FAX送信開始 - JobID: a0f44d85-ff59-45fd-b8a0-11f5c6faa671, FAX: 043-211-9261, URL: file:///E:/DEVELOP/PYTHON/fax-auto-sender/fax_test.pdf
+2025-10-21 11:32:40,207 - FaxService - INFO - FAX送信開始 - JobID: a0f44d85-ff59-45fd-b8a0-11f5c6faa671, FAX: 043-211-9261, URL: file:///E:/DEVELOP/PYTHON/fax-auto-sender/fax_test.pdf
+2025-10-21 11:32:40,258 - FaxService - ERROR - FAX送信エラー - JobID: a0f44d85-ff59-45fd-b8a0-11f5c6faa671, Error: (1801, 'OpenPrinter', 'プリンター名が無効です。'), FAX: 043-211-9261
+2025-10-21 11:32:40,261 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:32:40] "GET /socket.io/?EIO=4&transport=polling&t=Pe4d8ht HTTP/1.1" 200 -
+2025-10-21 11:32:40,432 - FaxService - ERROR - FAX送信エラー - JobID: a0f44d85-ff59-45fd-b8a0-11f5c6faa671, Error: (1801, 'OpenPrinter', 'プリンター名が無効です。'), FAX: 043-211-9261
+2025-10-21 11:32:40,494 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:32:40] "POST /socket.io/?EIO=4&transport=polling&t=Pe4d8v6&sid=wTqH7gDFdY3gn9_0AAAA HTTP/1.1" 200 -
+2025-10-21 11:32:40,576 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:32:40] "GET /socket.io/?EIO=4&transport=polling&t=Pe4d8v6.0&sid=wTqH7gDFdY3gn9_0AAAA HTTP/1.1" 200 -
+2025-10-21 11:32:40,579 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:32:40] "GET /socket.io/?EIO=4&transport=polling&t=Pe4d8-2&sid=wTqH7gDFdY3gn9_0AAAA HTTP/1.1" 200 -
+2025-10-21 11:32:41,061 - FaxService - ERROR - システムエラー - コールバック送信失敗: https://akioka.cloud/calback_url/test (ステータス: 404)
+2025-10-21 11:32:42,457 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:32:42] "GET / HTTP/1.1" 200 -
+2025-10-21 11:32:42,475 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:32:42] "GET /socket.io/?EIO=4&transport=polling&t=Pe4d9Rf HTTP/1.1" 200 -
+2025-10-21 11:32:42,710 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:32:42] "POST /socket.io/?EIO=4&transport=polling&t=Pe4d9Sf&sid=wk1GXgppFgkTX7SAAAAC HTTP/1.1" 200 -
+2025-10-21 11:32:42,850 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:32:42] "GET /socket.io/?EIO=4&transport=polling&t=Pe4d9Sg&sid=wk1GXgppFgkTX7SAAAAC HTTP/1.1" 200 -
+2025-10-21 11:32:42,853 - werkzeug - INFO - 127.0.0.1 - - [21/Oct/2025 11:32:42] "GET /api/jobs HTTP/1.1" 200 -
