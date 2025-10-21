@@ -1,0 +1,7 @@
+{
+  "file_url": "file:///D:/PYTHON/fax_driver_test/fax_test.pdf",
+  "fax_number": "0432119261",
+  "repeat_count": 1,
+  "interval_seconds": 1,
+  "api_url": "http://localhost:5000/send_fax"
+}

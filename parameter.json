@@ -1,0 +1,56 @@
+[
+  {
+    "id": "364536d5-a8fd-4b02-98a1-e4ab31a5f6b6",
+    "file_url": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+    "fax_number": "0432119261",
+    "status": -1,
+    "created_at": "2025-10-21T14:52:57.814997",
+    "updated_at": "2025-10-21T14:53:12.898611",
+    "error_message": "FAX送信に失敗しました"
+  },
+  {
+    "id": "c2cc0ad2-b0db-4896-a63c-5f8470c468f0",
+    "file_url": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+    "fax_number": "0432119261",
+    "status": -1,
+    "created_at": "2025-10-21T14:53:01.860303",
+    "updated_at": "2025-10-21T14:53:29.702615",
+    "error_message": "FAX送信に失敗しました"
+  },
+  {
+    "id": "d4ff5253-1540-4ca4-a8b7-f7075bd961ae",
+    "file_url": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+    "fax_number": "0432119261",
+    "status": 1,
+    "created_at": "2025-10-21T14:53:46.018746",
+    "updated_at": "2025-10-21T14:53:59.593797",
+    "error_message": "処理中"
+  },
+  {
+    "id": "16f26b1f-763b-4db0-acc2-3ff24773d151",
+    "file_url": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+    "fax_number": "0432119261",
+    "status": 1,
+    "created_at": "2025-10-21T14:53:50.080461",
+    "updated_at": "2025-10-21T14:54:09.277901",
+    "error_message": "処理中"
+  },
+  {
+    "id": "17d84416-2ed0-4f7d-a7d3-ebf2cfdb2729",
+    "file_url": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+    "fax_number": "0432119261",
+    "status": 1,
+    "created_at": "2025-10-21T14:54:18.683916",
+    "updated_at": "2025-10-21T14:54:28.851037",
+    "error_message": "処理中"
+  },
+  {
+    "id": "64c48beb-443a-4413-9d67-95bc535afd4a",
+    "file_url": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+    "fax_number": "0432119261",
+    "status": 1,
+    "created_at": "2025-10-21T14:54:22.741681",
+    "updated_at": "2025-10-21T14:54:38.548177",
+    "error_message": "処理中"
+  }
+]
