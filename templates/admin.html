@@ -344,7 +344,17 @@
                 .then(response => {
                     if (!response.ok) {
                         event.preventDefault();
-                        alert('変換されたPDFファイルが見つかりません。ファイルが削除されている可能性があります。');
+                        const errorMsg = response.status === 404 ? 
+                            '変換されたPDFファイルが見つかりません。元ファイルから再生成を試行します。' :
+                            'PDFファイルの読み込み中にエラーが発生しました。';
+                        alert(errorMsg);
+                        
+                        // 404の場合は自動再生成を試行
+                        if (response.status === 404) {
+                            setTimeout(() => {
+                                window.open(`/view_converted_pdf/${requestId}`, '_blank');
+                            }, 1000);
+                        }
                     }
                 })
                 .catch(error => {

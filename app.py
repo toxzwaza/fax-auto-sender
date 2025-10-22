@@ -22,11 +22,14 @@ CORS(app) # すべてのオリジンを許可
 # 設定
 PARAMETER_FILE = "parameter.json"
 UPLOAD_FOLDER = "uploads"
+CONVERTED_PDF_FOLDER = "converted_pdfs"
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'tiff', 'tif'}
 
-# アップロードフォルダを作成
+# フォルダを作成
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+if not os.path.exists(CONVERTED_PDF_FOLDER):
+    os.makedirs(CONVERTED_PDF_FOLDER)
 
 # グローバルロックを定義（FAX送信中の並列実行を防止）
 fax_lock = threading.Lock()
@@ -115,6 +118,55 @@ def update_request_converted_pdf(request_id, pdf_path):
             break
     
     save_parameters(params_list)
+
+def try_regenerate_converted_pdf(request_id, request_data):
+    """変換されたPDFファイルを再生成"""
+    try:
+        file_url = request_data.get("file_url")
+        if not file_url:
+            return jsonify({'success': False, 'error': '元ファイルのURLがありません'}), 404
+        
+        # 元ファイルがPDFの場合は変換不要
+        if file_url.lower().endswith(".pdf"):
+            return jsonify({'success': False, 'error': '元ファイルがPDFのため変換は不要です'}), 400
+        
+        # 元ファイルをダウンロード
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        temp_file_path = f"temp_regen_{timestamp}"
+        
+        # ファイル拡張子を決定
+        temp_ext = ".tmp"
+        if file_url.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.tif')):
+            temp_ext = os.path.splitext(file_url)[1]
+        
+        temp_path = temp_file_path + temp_ext
+        
+        if not download_file(file_url, temp_path):
+            return jsonify({'success': False, 'error': '元ファイルの取得に失敗しました'}), 404
+        
+        # 永続フォルダに変換されたPDFを保存
+        persistent_pdf_name = f"converted_{request_id}_{timestamp}.pdf"
+        persistent_pdf_path = os.path.join(CONVERTED_PDF_FOLDER, persistent_pdf_name)
+        
+        # PDFに変換
+        create_pdf_from_image(temp_path, persistent_pdf_path)
+        
+        # 一時ファイルを削除
+        os.remove(temp_path)
+        
+        # データベースを更新
+        update_request_converted_pdf(request_id, os.path.abspath(persistent_pdf_path))
+        
+        # PDFファイルを返す
+        with open(persistent_pdf_path, 'rb') as f:
+            file_content = f.read()
+        
+        from flask import Response
+        return Response(file_content, mimetype='application/pdf')
+        
+    except Exception as e:
+        print(f"PDF再生成エラー: {e}")
+        return jsonify({'success': False, 'error': f'PDF再生成に失敗しました: {str(e)}'}), 500
 
 # -------------------------------
 # ファイル処理
@@ -218,13 +270,23 @@ def process_single_fax_request(request_data):
 
         # 🟡 PDF以外の場合はPDFに変換
         if not file_url.lower().endswith(".pdf"):
-            pdf_path = local_file_path + ".pdf"
-            create_pdf_from_image(temp_path, pdf_path)
+            # 永続フォルダに変換されたPDFを保存
+            persistent_pdf_name = f"converted_{request_id}_{timestamp}.pdf"
+            persistent_pdf_path = os.path.join(CONVERTED_PDF_FOLDER, persistent_pdf_name)
+            
+            # 一時PDFを作成
+            temp_pdf_path = local_file_path + ".pdf"
+            create_pdf_from_image(temp_path, temp_pdf_path)
             os.remove(temp_path)
-            send_path = pdf_path
+            
+            # 永続フォルダにコピー
+            import shutil
+            shutil.copy2(temp_pdf_path, persistent_pdf_path)
+            
+            send_path = temp_pdf_path
             
             # 変換後のPDFファイルパスを保存
-            update_request_converted_pdf(request_id, os.path.abspath(pdf_path))
+            update_request_converted_pdf(request_id, os.path.abspath(persistent_pdf_path))
         else:
             send_path = temp_path
 
@@ -531,7 +593,7 @@ def view_converted_pdf(request_id):
             if request.get("id") == request_id:
                 converted_pdf_path = request.get("converted_pdf_path")
                 if not converted_pdf_path:
-                    return jsonify({'success': False, 'error': '変換されたPDFファイルが見つかりません'}), 404
+                    return jsonify({'success': False, 'error': '変換されたPDFファイルの情報がありません'}), 404
                 
                 if os.path.exists(converted_pdf_path):
                     with open(converted_pdf_path, 'rb') as f:
@@ -541,7 +603,8 @@ def view_converted_pdf(request_id):
                     return Response(file_content, mimetype='application/pdf')
                 else:
                     print(f"変換されたPDFファイルが見つかりません: {converted_pdf_path}")
-                    return jsonify({'success': False, 'error': f'変換されたPDFファイルが見つかりません: {os.path.basename(converted_pdf_path)}'}), 404
+                    # ファイルが存在しない場合、元ファイルから再生成を試行
+                    return try_regenerate_converted_pdf(request_id, request)
         
         return jsonify({'success': False, 'error': '該当する送信が見つかりません'}), 404
     except Exception as e:
