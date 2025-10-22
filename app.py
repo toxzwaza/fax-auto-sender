@@ -221,7 +221,7 @@ def download_file(file_url, local_path):
 # PDF作成処理
 # -------------------------------
 def create_pdf_from_image(image_path, output_pdf_path):
-    """画像をA4縦のPDFに貼り付けて保存"""
+    """画像をA4縦のPDFに貼り付けて保存（余白最小化）"""
     c = canvas.Canvas(output_pdf_path, pagesize=A4)
     width, height = A4
 
@@ -229,22 +229,35 @@ def create_pdf_from_image(image_path, output_pdf_path):
     img_width, img_height = img.size
     aspect = img_height / img_width
 
-    # A4余白（30mm程度）を考慮して調整
-    max_width = width - 60
-    max_height = height - 60
-    if max_width * aspect <= max_height:
-        display_width = max_width
-        display_height = max_width * aspect
-    else:
+    # A4余白を最小限（3mm程度）に設定
+    margin = 6  # 3mm程度の最小余白
+    max_width = width - (margin * 2)
+    max_height = height - (margin * 2)
+    
+    # A4のアスペクト比（縦長）
+    a4_aspect = height / width
+    
+    # 画像のアスペクト比とA4のアスペクト比を比較して最適な配置を決定
+    if aspect > a4_aspect:
+        # 画像が縦長の場合：高さを基準にサイズを決定
         display_height = max_height
         display_width = max_height / aspect
+    else:
+        # 画像が横長または正方形の場合：幅を基準にサイズを決定
+        display_width = max_width
+        display_height = max_width * aspect
 
+    # 中央配置
     x = (width - display_width) / 2
     y = (height - display_height) / 2
+    
+    # 画像を描画
     c.drawImage(ImageReader(img), x, y, display_width, display_height)
     c.showPage()
     c.save()
-    print(f"画像をA4 PDFに変換しました: {output_pdf_path}")
+    print(f"画像をA4 PDFに変換しました（余白最小化・最適化）: {output_pdf_path}")
+    print(f"  元画像サイズ: {img_width}x{img_height}, アスペクト比: {aspect:.3f}")
+    print(f"  表示サイズ: {display_width:.1f}x{display_height:.1f}, 余白: {margin}pt")
 
 # -------------------------------
 # FAX送信処理
