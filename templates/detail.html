@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>リクエスト詳細 - {{ request_data.id[:8] }}...</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #007bff;
+        }
+        h1 {
+            color: #333;
+            margin: 0;
+        }
+        .back-link {
+            text-decoration: none;
+            color: #007bff;
+            padding: 10px 20px;
+            border: 1px solid #007bff;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .back-link:hover {
+            background: #007bff;
+            color: white;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-processing { background: #d1ecf1; color: #0c5460; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-error { background: #f8d7da; color: #721c24; }
+        .info-section {
+            margin-bottom: 30px;
+        }
+        .info-section h2 {
+            color: #495057;
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #6c757d;
+        }
+        .info-value {
+            color: #333;
+            word-break: break-word;
+        }
+        .file-preview {
+            margin-top: 20px;
+        }
+        .file-link {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background 0.3s;
+        }
+        .file-link:hover {
+            background: #0056b3;
+        }
+        .file-link.disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .error-box {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .timestamp {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .callback-indicator {
+            font-size: 24px;
+        }
+        .actions {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e9ecef;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .not-available {
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>📠 FAX送信リクエスト詳細</h1>
+                <div class="timestamp">ID: {{ request_data.id }}</div>
+            </div>
+            <a href="/" class="back-link">← 一覧に戻る</a>
+        </div>
+
+        <!-- ステータス表示 -->
+        <div class="info-section">
+            <h2>📊 ステータス</h2>
+            <span class="status-badge {{ status_class }}">{{ status_text }}</span>
+            {% if request_data.error_message %}
+            <div class="error-box">
+                <strong>エラーメッセージ:</strong><br>
+                {{ request_data.error_message }}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 基本情報 -->
+        <div class="info-section">
+            <h2>📋 基本情報</h2>
+            <div class="info-grid">
+                <div class="info-label">依頼者:</div>
+                <div class="info-value">
+                    {% if request_data.request_user %}
+                        {{ request_data.request_user }}
+                    {% else %}
+                        <span class="not-available">未設定</span>
+                    {% endif %}
+                </div>
+
+                <div class="info-label">ファイル名:</div>
+                <div class="info-value">
+                    {% if request_data.file_name %}
+                        {{ request_data.file_name }}
+                    {% else %}
+                        <span class="not-available">未設定</span>
+                    {% endif %}
+                </div>
+
+                <div class="info-label">発注先:</div>
+                <div class="info-value">
+                    {% if request_data.order_destination %}
+                        {{ request_data.order_destination }}
+                    {% else %}
+                        <span class="not-available">未設定</span>
+                    {% endif %}
+                </div>
+
+                <div class="info-label">FAX番号:</div>
+                <div class="info-value">{{ request_data.fax_number }}</div>
+
+                <div class="info-label">コールバックURL:</div>
+                <div class="info-value">
+                    {% if request_data.callback_url %}
+                        <span class="callback-indicator">⭕</span> 設定あり
+                        <br><small style="color: #6c757d;">{{ request_data.callback_url }}</small>
+                    {% else %}
+                        <span class="callback-indicator">❌</span> 設定なし
+                    {% endif %}
+                </div>
+
+                <div class="info-label">作成日時:</div>
+                <div class="info-value">{{ created_at }}</div>
+
+                <div class="info-label">更新日時:</div>
+                <div class="info-value">{{ updated_at }}</div>
+            </div>
+        </div>
+
+        <!-- ファイル情報 -->
+        <div class="info-section">
+            <h2>📁 ファイル</h2>
+            <div class="file-preview">
+                <h3>元ファイル</h3>
+                {% if has_original_file %}
+                    <a href="/view_file/{{ request_data.id }}" target="_blank" class="file-link">
+                        📄 元ファイルを表示
+                    </a>
+                {% else %}
+                    <span class="not-available">ファイルが見つかりません</span>
+                {% endif %}
+                <div style="margin-top: 10px;">
+                    <small style="color: #6c757d;">URL: {{ request_data.file_url }}</small>
+                </div>
+            </div>
+
+            {% if request_data.converted_pdf_path %}
+            <div class="file-preview">
+                <h3>変換後PDF</h3>
+                <a href="/view_converted_pdf/{{ request_data.id }}" target="_blank" class="file-link">
+                    📄 変換PDFを表示
+                </a>
+                <div style="margin-top: 10px;">
+                    <small style="color: #6c757d;">パス: {{ request_data.converted_pdf_path }}</small>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- アクション -->
+        <div class="actions">
+            <h2>🔧 操作</h2>
+            {% if request_data.status == -1 %}
+                <button class="btn btn-warning" onclick="retryRequest()">🔄 再送する</button>
+            {% endif %}
+            <button class="btn" onclick="refreshStatus()">🔄 ステータス更新</button>
+            <a href="/requests" class="btn">📊 JSON表示</a>
+        </div>
+    </div>
+
+    <script>
+        // ステータスを更新
+        async function refreshStatus() {
+            try {
+                const response = await fetch('/status/{{ request_data.id }}');
+                const data = await response.json();
+                
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('ステータス更新に失敗しました');
+                }
+            } catch (error) {
+                alert('エラーが発生しました: ' + error.message);
+            }
+        }
+
+        // 再送
+        async function retryRequest() {
+            if (!confirm('この送信を再試行しますか？')) return;
+            
+            try {
+                const response = await fetch('/retry_request/{{ request_data.id }}', { 
+                    method: 'POST' 
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('再送リクエストを受け付けました');
+                    location.reload();
+                } else {
+                    alert('再送に失敗しました: ' + data.error);
+                }
+            } catch (error) {
+                alert('エラーが発生しました: ' + error.message);
+            }
+        }
+
+        // 自動更新（30秒ごと、処理中の場合のみ）
+        {% if request_data.status in [0, 2] %}
+        setInterval(refreshStatus, 30000);
+        {% endif %}
+    </script>
+</body>
+</html>
+

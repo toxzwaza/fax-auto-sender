@@ -138,6 +138,34 @@
             color: #666;
             font-style: italic;
         }
+        .search-container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .search-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            align-items: center;
+        }
+        .search-input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            width: 100%;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .search-result {
+            margin-top: 15px;
+            color: #666;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -173,6 +201,27 @@
             <button class="btn btn-warning" onclick="retryErrors()">🔄 エラー再送</button>
             <button class="btn btn-danger" onclick="clearAll()">🗑️ 全削除</button>
         </div>
+
+        <!-- 検索フォーム -->
+        <div class="search-container">
+            <h3 style="margin-bottom: 15px;">🔍 絞り込み検索</h3>
+            <div class="search-form">
+                <input type="text" id="search-user" placeholder="依頼者" class="search-input">
+                <input type="text" id="search-filename" placeholder="ファイル名" class="search-input">
+                <input type="text" id="search-order" placeholder="発注先" class="search-input">
+                <input type="text" id="search-fax" placeholder="FAX番号" class="search-input">
+                <select id="search-status" class="search-input">
+                    <option value="">ステータス（全て）</option>
+                    <option value="0">待機中</option>
+                    <option value="2">処理中</option>
+                    <option value="1">完了</option>
+                    <option value="-1">エラー</option>
+                </select>
+                <button class="btn" onclick="applySearch()">🔍 検索</button>
+                <button class="btn" onclick="clearSearch()">✖ クリア</button>
+            </div>
+            <div id="search-result" class="search-result"></div>
+        </div>
         
         <div class="table-container">
             <div id="loading" class="loading">データを読み込み中...</div>
@@ -181,9 +230,13 @@
                 <thead>
                     <tr>
                         <th>ID</th>
+                        <th>依頼者</th>
+                        <th>ファイル名</th>
+                        <th>発注先</th>
                         <th>ファイル</th>
                         <th>変換PDF</th>
                         <th>FAX番号</th>
+                        <th>コールバック</th>
                         <th>ステータス</th>
                         <th>作成日時</th>
                         <th>更新日時</th>
@@ -251,7 +304,10 @@
             noData.style.display = 'none';
             table.style.display = 'table';
             
-            tbody.innerHTML = requests.map(request => {
+            // 検索フィルタを適用
+            let displayRequests = filterRequests(requests);
+            
+            tbody.innerHTML = displayRequests.map(request => {
                 const statusClass = getStatusClass(request.status);
                 const statusText = getStatusText(request.status);
                 const fileInfo = getFileInfo(request.file_url, request.id);
@@ -259,13 +315,21 @@
                 const createdAt = formatDateTime(request.created_at);
                 const updatedAt = formatDateTime(request.updated_at);
                 const errorMsg = request.error_message || '';
+                const requestUser = request.request_user || '<span style="color: #999;">-</span>';
+                const fileName = request.file_name || '<span style="color: #999;">-</span>';
+                const orderDestination = request.order_destination || '<span style="color: #999;">-</span>';
+                const callbackUrl = request.callback_url ? '⭕' : '❌';
                 
                 return `
                     <tr>
-                        <td>${request.id.substring(0, 8)}...</td>
+                        <td><a href="/${request.id}" class="file-link" style="text-decoration: none;">${request.id.substring(0, 8)}...</a></td>
+                        <td>${requestUser}</td>
+                        <td>${fileName}</td>
+                        <td>${orderDestination}</td>
                         <td class="file-info">${fileInfo}</td>
                         <td class="file-info">${convertedPdfInfo}</td>
                         <td>${request.fax_number}</td>
+                        <td style="text-align: center; font-size: 16px;">${callbackUrl}</td>
                         <td><span class="status ${statusClass}">${statusText}</span></td>
                         <td class="timestamp">${createdAt}</td>
                         <td class="timestamp">${updatedAt}</td>
@@ -276,6 +340,9 @@
                     </tr>
                 `;
             }).join('');
+            
+            // 検索結果を表示
+            updateSearchResult(displayRequests.length, requests.length);
         }
         
         // ステータスクラスを取得
@@ -446,6 +513,52 @@
                 }
             } catch (error) {
                 alert('エラーが発生しました: ' + error.message);
+            }
+        }
+        
+        // 検索フィルタリング
+        function filterRequests(requestsList) {
+            const searchUser = document.getElementById('search-user').value.toLowerCase();
+            const searchFilename = document.getElementById('search-filename').value.toLowerCase();
+            const searchOrder = document.getElementById('search-order').value.toLowerCase();
+            const searchFax = document.getElementById('search-fax').value.toLowerCase();
+            const searchStatus = document.getElementById('search-status').value;
+            
+            return requestsList.filter(request => {
+                const matchUser = !searchUser || (request.request_user && request.request_user.toLowerCase().includes(searchUser));
+                const matchFilename = !searchFilename || (request.file_name && request.file_name.toLowerCase().includes(searchFilename));
+                const matchOrder = !searchOrder || (request.order_destination && request.order_destination.toLowerCase().includes(searchOrder));
+                const matchFax = !searchFax || (request.fax_number && request.fax_number.includes(searchFax));
+                const matchStatus = !searchStatus || request.status == searchStatus;
+                
+                return matchUser && matchFilename && matchOrder && matchFax && matchStatus;
+            });
+        }
+        
+        // 検索を適用
+        function applySearch() {
+            updateTable();
+        }
+        
+        // 検索をクリア
+        function clearSearch() {
+            document.getElementById('search-user').value = '';
+            document.getElementById('search-filename').value = '';
+            document.getElementById('search-order').value = '';
+            document.getElementById('search-fax').value = '';
+            document.getElementById('search-status').value = '';
+            updateTable();
+        }
+        
+        // 検索結果を表示
+        function updateSearchResult(displayCount, totalCount) {
+            const resultDiv = document.getElementById('search-result');
+            if (displayCount < totalCount) {
+                resultDiv.textContent = `${totalCount}件中 ${displayCount}件を表示`;
+                resultDiv.style.color = '#007bff';
+                resultDiv.style.fontWeight = 'bold';
+            } else {
+                resultDiv.textContent = '';
             }
         }
         

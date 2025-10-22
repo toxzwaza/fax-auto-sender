@@ -65,7 +65,7 @@ def save_parameters(data):
     except Exception as e:
         print(f"パラメータ保存エラー: {e}")
 
-def add_fax_request(file_url, fax_number):
+def add_fax_request(file_url, fax_number, request_user=None, file_name=None, callback_url=None, order_destination=None):
     """新しいFAX送信リクエストを追加"""
     params_list = load_parameters()
     
@@ -77,7 +77,11 @@ def add_fax_request(file_url, fax_number):
         "created_at": datetime.now().isoformat(),
         "updated_at": datetime.now().isoformat(),
         "error_message": None,
-        "converted_pdf_path": None  # PDF変換後のファイルパス
+        "converted_pdf_path": None,  # PDF変換後のファイルパス
+        "request_user": request_user,  # 依頼者名
+        "file_name": file_name,  # ファイル名
+        "callback_url": callback_url,  # 通知先URL
+        "order_destination": order_destination  # 発注先
     }
     
     params_list.append(new_request)
@@ -260,6 +264,30 @@ def create_pdf_from_image(image_path, output_pdf_path):
     print(f"  表示サイズ: {display_width:.1f}x{display_height:.1f}, 余白: {margin}pt")
 
 # -------------------------------
+# コールバック通知
+# -------------------------------
+
+def send_callback_notification(request_data):
+    """コールバックURLにGET通知を送信（成功時のみ）"""
+    callback_url = request_data.get("callback_url")
+    if not callback_url:
+        return  # callback_urlが設定されていない場合は何もしない
+    
+    try:
+        # コールバックURLにGETリクエストを送信（パラメータなし）
+        print(f"📞 コールバック通知送信: {callback_url}")
+        response = requests.get(callback_url, timeout=10)
+        response.raise_for_status()
+        print(f"✅ コールバック通知成功: ステータスコード={response.status_code}")
+        
+    except requests.exceptions.Timeout:
+        print(f"⚠ コールバック通知タイムアウト: {callback_url}")
+    except requests.exceptions.RequestException as e:
+        print(f"⚠ コールバック通知エラー: {e}")
+    except Exception as e:
+        print(f"⚠ コールバック通知処理エラー: {e}")
+
+# -------------------------------
 # FAX送信処理
 # -------------------------------
 
@@ -307,14 +335,18 @@ def process_single_fax_request(request_data):
         if send_fax_with_retry(os.path.abspath(send_path), fax_number):
             update_request_status(request_id, 1)
             print(f"FAX送信完了: ID={request_id}")
+            # コールバック通知を送信（成功時のみ）
+            send_callback_notification(request_data)
             return True
         else:
-            update_request_status(request_id, -1, "FAX送信に失敗しました")
+            error_msg = "FAX送信に失敗しました"
+            update_request_status(request_id, -1, error_msg)
             print(f"FAX送信失敗: ID={request_id}")
             return False
 
     except Exception as e:
-        update_request_status(request_id, -1, str(e))
+        error_msg = str(e)
+        update_request_status(request_id, -1, error_msg)
         print(f"FAX送信処理エラー: {e}")
         return False
 
@@ -376,16 +408,26 @@ def send_fax_api():
         data = request.get_json()
         file_url = data.get('file_url')
         fax_number = data.get('fax_number')
+        request_user = data.get('request_user')  # オプション
+        file_name = data.get('file_name')  # オプション
+        callback_url = data.get('callback_url')  # オプション
+        order_destination = data.get('order_destination')  # オプション
 
         if not file_url or not fax_number:
             return jsonify({'success': False, 'error': 'file_urlとfax_numberは必須です'}), 400
 
-        new_request = add_fax_request(file_url, fax_number)
+        new_request = add_fax_request(file_url, fax_number, request_user, file_name, callback_url, order_destination)
         return jsonify({
             'success': True,
             'message': 'FAX送信リクエストを登録しました',
-            'request_id': new_request['id'],
-            'status': 'pending'
+            'request_id': new_request['id'],  # 後方互換性のため
+            'status': 'pending',
+            'request_user': new_request.get('request_user'),
+            'file_name': new_request.get('file_name'),
+            'callback_url': new_request.get('callback_url'),
+            'order_destination': new_request.get('order_destination'),
+            'fax_number': new_request['fax_number'],
+            'created_at': new_request['created_at']
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -400,6 +442,10 @@ def upload_and_send_fax():
         
         file = request.files['file']
         fax_number = request.form.get('fax_number')
+        request_user = request.form.get('request_user')  # オプション
+        file_name = request.form.get('file_name')  # オプション
+        callback_url = request.form.get('callback_url')  # オプション
+        order_destination = request.form.get('order_destination')  # オプション
         
         if not fax_number:
             return jsonify({'success': False, 'error': 'fax_numberは必須です'}), 400
@@ -412,16 +458,26 @@ def upload_and_send_fax():
         if not file_path:
             return jsonify({'success': False, 'error': 'サポートされていないファイル形式です'}), 400
         
+        # ファイル名が指定されていない場合は、アップロードされたファイル名を使用
+        if not file_name:
+            file_name = file.filename
+        
         # ローカルファイルURLとして登録
         file_url = f"file:///{file_path.replace(os.sep, '/')}"
-        new_request = add_fax_request(file_url, fax_number)
+        new_request = add_fax_request(file_url, fax_number, request_user, file_name, callback_url, order_destination)
         
         return jsonify({
             'success': True,
             'message': 'ファイルをアップロードし、FAX送信リクエストを登録しました',
-            'request_id': new_request['id'],
+            'id': new_request['id'],
             'status': 'pending',
-            'uploaded_file': file_path
+            'request_user': new_request.get('request_user'),
+            'file_name': new_request.get('file_name'),
+            'callback_url': new_request.get('callback_url'),
+            'order_destination': new_request.get('order_destination'),
+            'fax_number': new_request['fax_number'],
+            'uploaded_file': file_path,
+            'created_at': new_request['created_at']
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -622,6 +678,57 @@ def view_converted_pdf(request_id):
         return jsonify({'success': False, 'error': '該当する送信が見つかりません'}), 404
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/<request_id>', methods=['GET'])
+def request_detail(request_id):
+    """リクエスト詳細画面を表示"""
+    try:
+        params_list = load_parameters()
+        if not isinstance(params_list, list):
+            return "パラメータデータが配列ではありません", 400
+        
+        # 指定されたIDのリクエストを探す
+        for request_data in params_list:
+            if request_data.get("id") == request_id:
+                # ステータステキストとクラスを取得
+                status = request_data.get("status")
+                status_map = {
+                    0: ("待機中", "status-pending"),
+                    1: ("完了", "status-completed"),
+                    2: ("処理中", "status-processing"),
+                    -1: ("エラー", "status-error")
+                }
+                status_text, status_class = status_map.get(status, ("不明", ""))
+                
+                # 日時をフォーマット
+                from datetime import datetime
+                created_at = datetime.fromisoformat(request_data.get("created_at")).strftime("%Y年%m月%d日 %H:%M:%S") if request_data.get("created_at") else "不明"
+                updated_at = datetime.fromisoformat(request_data.get("updated_at")).strftime("%Y年%m月%d日 %H:%M:%S") if request_data.get("updated_at") else "不明"
+                
+                # 元ファイルの存在確認
+                file_url = request_data.get("file_url")
+                has_original_file = False
+                if file_url:
+                    if file_url.startswith('file://'):
+                        local_file_path = file_url[7:]
+                        if local_file_path.startswith('/'):
+                            local_file_path = local_file_path[1:]
+                        has_original_file = os.path.exists(local_file_path)
+                    else:
+                        has_original_file = True  # URLの場合は存在すると仮定
+                
+                return render_template('detail.html',
+                    request_data=request_data,
+                    status_text=status_text,
+                    status_class=status_class,
+                    created_at=created_at,
+                    updated_at=updated_at,
+                    has_original_file=has_original_file
+                )
+        
+        return "該当するリクエストが見つかりません", 404
+    except Exception as e:
+        return f"エラーが発生しました: {str(e)}", 500
 
 if __name__ == '__main__':
     worker_thread = threading.Thread(target=fax_worker, daemon=True)
