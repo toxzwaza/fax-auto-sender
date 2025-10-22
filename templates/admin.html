@@ -182,6 +182,7 @@
                     <tr>
                         <th>ID</th>
                         <th>ファイル</th>
+                        <th>変換PDF</th>
                         <th>FAX番号</th>
                         <th>ステータス</th>
                         <th>作成日時</th>
@@ -254,6 +255,7 @@
                 const statusClass = getStatusClass(request.status);
                 const statusText = getStatusText(request.status);
                 const fileInfo = getFileInfo(request.file_url, request.id);
+                const convertedPdfInfo = getConvertedPdfInfo(request.converted_pdf_path, request.id);
                 const createdAt = formatDateTime(request.created_at);
                 const updatedAt = formatDateTime(request.updated_at);
                 const errorMsg = request.error_message || '';
@@ -262,6 +264,7 @@
                     <tr>
                         <td>${request.id.substring(0, 8)}...</td>
                         <td class="file-info">${fileInfo}</td>
+                        <td class="file-info">${convertedPdfInfo}</td>
                         <td>${request.fax_number}</td>
                         <td><span class="status ${statusClass}">${statusText}</span></td>
                         <td class="timestamp">${createdAt}</td>
@@ -308,6 +311,16 @@
             }
         }
         
+        // 変換されたPDFファイル情報を取得
+        function getConvertedPdfInfo(convertedPdfPath, requestId) {
+            if (!convertedPdfPath) {
+                return '<span style="color: #999;">-</span>';
+            }
+            
+            const fileName = convertedPdfPath.split('/').pop() || convertedPdfPath.split('\\').pop();
+            return `<a href="/view_converted_pdf/${requestId}" target="_blank" class="file-link" onclick="handleConvertedPdfClick(event, '${requestId}')">📄 ${fileName}</a>`;
+        }
+        
         // ファイルクリック時のエラーハンドリング
         function handleFileClick(event, requestId) {
             // ファイルが存在しない場合のエラーハンドリング
@@ -321,6 +334,22 @@
                 .catch(error => {
                     event.preventDefault();
                     alert('ファイルの読み込み中にエラーが発生しました。');
+                });
+        }
+        
+        // 変換されたPDFファイルクリック時のエラーハンドリング
+        function handleConvertedPdfClick(event, requestId) {
+            // ファイルが存在しない場合のエラーハンドリング
+            fetch(`/view_converted_pdf/${requestId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        event.preventDefault();
+                        alert('変換されたPDFファイルが見つかりません。ファイルが削除されている可能性があります。');
+                    }
+                })
+                .catch(error => {
+                    event.preventDefault();
+                    alert('PDFファイルの読み込み中にエラーが発生しました。');
                 });
         }
         

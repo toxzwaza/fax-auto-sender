@@ -73,7 +73,8 @@ def add_fax_request(file_url, fax_number):
         "status": 0,  # 0: 待機中, 1: 完了, -1: エラー, 2: 処理中
         "created_at": datetime.now().isoformat(),
         "updated_at": datetime.now().isoformat(),
-        "error_message": None
+        "error_message": None,
+        "converted_pdf_path": None  # PDF変換後のファイルパス
     }
     
     params_list.append(new_request)
@@ -95,6 +96,22 @@ def update_request_status(request_id, status, error_message=None):
             request["updated_at"] = datetime.now().isoformat()
             if error_message:
                 request["error_message"] = error_message
+            break
+    
+    save_parameters(params_list)
+
+def update_request_converted_pdf(request_id, pdf_path):
+    """リクエストの変換後PDFファイルパスを更新"""
+    params_list = load_parameters()
+    
+    if not isinstance(params_list, list):
+        print(f"パラメータデータが配列ではありません: {type(params_list)}")
+        return
+    
+    for request in params_list:
+        if isinstance(request, dict) and request.get("id") == request_id:
+            request["converted_pdf_path"] = pdf_path
+            request["updated_at"] = datetime.now().isoformat()
             break
     
     save_parameters(params_list)
@@ -205,6 +222,9 @@ def process_single_fax_request(request_data):
             create_pdf_from_image(temp_path, pdf_path)
             os.remove(temp_path)
             send_path = pdf_path
+            
+            # 変換後のPDFファイルパスを保存
+            update_request_converted_pdf(request_id, os.path.abspath(pdf_path))
         else:
             send_path = temp_path
 
@@ -493,6 +513,35 @@ def view_file(request_id):
                     # URLをそのまま返す（リダイレクト）
                     from flask import redirect
                     return redirect(file_url)
+        
+        return jsonify({'success': False, 'error': '該当する送信が見つかりません'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/view_converted_pdf/<request_id>', methods=['GET'])
+def view_converted_pdf(request_id):
+    """変換されたPDFファイルを表示"""
+    try:
+        params_list = load_parameters()
+        if not isinstance(params_list, list):
+            return jsonify({'success': False, 'error': 'パラメータデータが配列ではありません'}), 400
+        
+        # 指定されたIDのリクエストを探す
+        for request in params_list:
+            if request.get("id") == request_id:
+                converted_pdf_path = request.get("converted_pdf_path")
+                if not converted_pdf_path:
+                    return jsonify({'success': False, 'error': '変換されたPDFファイルが見つかりません'}), 404
+                
+                if os.path.exists(converted_pdf_path):
+                    with open(converted_pdf_path, 'rb') as f:
+                        file_content = f.read()
+                    
+                    from flask import Response
+                    return Response(file_content, mimetype='application/pdf')
+                else:
+                    print(f"変換されたPDFファイルが見つかりません: {converted_pdf_path}")
+                    return jsonify({'success': False, 'error': f'変換されたPDFファイルが見つかりません: {os.path.basename(converted_pdf_path)}'}), 404
         
         return jsonify({'success': False, 'error': '該当する送信が見つかりません'}), 404
     except Exception as e:
