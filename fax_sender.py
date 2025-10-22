@@ -60,6 +60,7 @@ def send_fax(pdf_path, fax_number):
         pyautogui.typewrite(fax_number, interval=0.1)  # より遅い入力
         print(f"宛先番号 {fax_number} を入力しました。")
 
+        # 以下一時的にコメント
         time.sleep(0.8)
 
         # TABキーを9回押して「送信開始」ボタンにフォーカス

@@ -9,6 +9,10 @@ import uuid
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from fax_sender import send_fax_with_retry, cleanup_temp_files
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from PIL import Image
 
 app = Flask(__name__)
 CORS(app) # すべてのオリジンを許可
@@ -145,6 +149,35 @@ def download_file(file_url, local_path):
         return False
 
 # -------------------------------
+# PDF作成処理
+# -------------------------------
+def create_pdf_from_image(image_path, output_pdf_path):
+    """画像をA4縦のPDFに貼り付けて保存"""
+    c = canvas.Canvas(output_pdf_path, pagesize=A4)
+    width, height = A4
+
+    img = Image.open(image_path)
+    img_width, img_height = img.size
+    aspect = img_height / img_width
+
+    # A4余白（30mm程度）を考慮して調整
+    max_width = width - 60
+    max_height = height - 60
+    if max_width * aspect <= max_height:
+        display_width = max_width
+        display_height = max_width * aspect
+    else:
+        display_height = max_height
+        display_width = max_height / aspect
+
+    x = (width - display_width) / 2
+    y = (height - display_height) / 2
+    c.drawImage(ImageReader(img), x, y, display_width, display_height)
+    c.showPage()
+    c.save()
+    print(f"画像をA4 PDFに変換しました: {output_pdf_path}")
+
+# -------------------------------
 # FAX送信処理
 # -------------------------------
 
@@ -157,14 +190,26 @@ def process_single_fax_request(request_data):
 
     try:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        local_file_path = f"temp_fax_{timestamp}.pdf"
+        local_file_path = f"temp_fax_{timestamp}"
 
-        if not download_file(file_url, local_file_path):
+        # 元ファイルをダウンロード
+        temp_ext = ".pdf" if file_url.lower().endswith(".pdf") else ".tmp"
+        temp_path = local_file_path + temp_ext
+        if not download_file(file_url, temp_path):
             update_request_status(request_id, -1, f"ファイル取得に失敗: {file_url}")
             return False
 
-        # FAX送信実行（リトライ機能付き）
-        if send_fax_with_retry(os.path.abspath(local_file_path), fax_number):
+        # 🟡 PDF以外の場合はPDFに変換
+        if not file_url.lower().endswith(".pdf"):
+            pdf_path = local_file_path + ".pdf"
+            create_pdf_from_image(temp_path, pdf_path)
+            os.remove(temp_path)
+            send_path = pdf_path
+        else:
+            send_path = temp_path
+
+        # FAX送信実行
+        if send_fax_with_retry(os.path.abspath(send_path), fax_number):
             update_request_status(request_id, 1)
             print(f"FAX送信完了: ID={request_id}")
             return True
@@ -179,13 +224,20 @@ def process_single_fax_request(request_data):
         return False
 
     finally:
-        try:
-            os.remove(local_file_path)
-        except:
-            pass
-        
-        # アップロードされたファイルはクリーンアップしない（表示用に保持）
-        # 必要に応じて手動でクリーンアップする
+        # FAXドライバーがファイルを使用中の場合があるため、削除をリトライ
+        for f in [local_file_path + ".pdf", local_file_path + ".tmp"]:
+            if os.path.exists(f):
+                for retry in range(5):
+                    try:
+                        os.remove(f)
+                        print(f"一時ファイルを削除: {f}")
+                        break
+                    except PermissionError:
+                        print(f"⚠ ファイル使用中のため削除保留: {f} (試行 {retry+1}/5)")
+                        time.sleep(2)
+                else:
+                    print(f"⚠ ファイル削除失敗（使用中の可能性あり）: {f}")
+
 
 # -------------------------------
 # ワーカースレッド
