@@ -1,218 +1,42 @@
 [
   {
-    "id": "0e301d11-2ad4-48e6-8e99-ec023591da2c",
-    "file_url": "http://monokanri-manage.local/storage/purchase/1761031407387.png",
-    "fax_number": "0432119261",
+    "id": "e4ef65ad-ae61-44c0-8ba2-a2baf2474474",
+    "file_url": "http://monokanri-manage.local/storage/purchase/1761176971646.png",
+    "fax_number": "0864562022",
     "status": 1,
-    "created_at": "2025-10-21T16:54:00.262463",
-    "updated_at": "2025-10-21T16:54:09.237598",
-    "error_message": "処理中"
+    "created_at": "2025-10-23T08:50:42.140961",
+    "updated_at": "2025-10-23T08:50:54.596183",
+    "error_message": "処理中",
+    "converted_pdf_path": "C:\\Users\\Administrator.SV-AP01\\Desktop\\PythonProgram\\fax-auto-sender\\converted_pdfs\\converted_e4ef65ad-ae61-44c0-8ba2-a2baf2474474_20251023_085046.pdf"
   },
   {
-    "id": "b15b548c-2444-4e4a-b850-783830978359",
-    "file_url": "file:///uploads/print_content_20251021_173724_20251021_173745.png",
-    "fax_number": "0432119261",
-    "status": 1,
-    "created_at": "2025-10-21T17:37:45.960695",
-    "updated_at": "2025-10-21T17:37:56.385524",
-    "error_message": "処理中"
-  },
-  {
-    "id": "15278f25-dd51-4af4-ba1a-9486710f2222",
-    "file_url": "file:///uploads/print_content_20251021_175844_20251021_175903.png",
-    "fax_number": "0432119261",
-    "status": 1,
-    "created_at": "2025-10-21T17:59:03.981789",
-    "updated_at": "2025-10-21T17:59:13.323731",
-    "error_message": "処理中"
-  },
-  {
-    "id": "1fcb0b63-baaf-4319-8593-d64938a83867",
-    "file_url": "file:///uploads/print_content_20251022_080324_20251022_080339.png",
-    "fax_number": "0432119261",
-    "status": 1,
-    "created_at": "2025-10-22T08:03:39.028008",
-    "updated_at": "2025-10-22T08:03:48.424035",
-    "error_message": "処理中"
-  },
-  {
-    "id": "0c465558-7acb-430c-8b53-7228afa2ba1b",
-    "file_url": "file:///uploads/print_content_20251022_082408_20251022_082424.png",
-    "fax_number": "0432119261",
-    "status": 1,
-    "created_at": "2025-10-22T08:24:24.856280",
-    "updated_at": "2025-10-22T08:24:37.441871",
-    "error_message": "処理中"
-  },
-  {
-    "id": "3a668d2d-f267-4484-8a2e-471fc8125f16",
-    "file_url": "file:///uploads/print_content_20251022_082502_20251022_082517.png",
-    "fax_number": "0432119261",
-    "status": 1,
-    "created_at": "2025-10-22T08:25:17.739430",
-    "updated_at": "2025-10-22T08:25:26.380488",
-    "error_message": "処理中"
-  },
-  {
-    "id": "d2561525-d6d0-4abd-8ae2-95bfdcf1b9f3",
-    "file_url": "file:///uploads/print_content_20251022_083038_20251022_083053.png",
-    "fax_number": "0432119261",
-    "status": 1,
-    "created_at": "2025-10-22T08:30:53.980114",
-    "updated_at": "2025-10-22T08:31:05.340300",
-    "error_message": "処理中"
-  },
-  {
-    "id": "8a945644-b063-4a6e-8e2e-b77867f3d7ee",
-    "file_url": "file:///uploads/print_content_20251022_083253_20251022_083307.png",
-    "fax_number": "0432119261",
-    "status": 1,
-    "created_at": "2025-10-22T08:33:07.442824",
-    "updated_at": "2025-10-22T08:33:19.298403",
-    "error_message": "処理中"
-  },
-  {
-    "id": "13190403-1566-475f-8395-ee3f5e299d6d",
-    "file_url": "file:///uploads/print_content_20251022_084303_20251022_084317.png",
-    "fax_number": "0432119261",
-    "status": 1,
-    "created_at": "2025-10-22T08:43:17.684253",
-    "updated_at": "2025-10-22T08:43:28.271453",
-    "error_message": "処理中"
-  },
-  {
-    "id": "b453db0d-32c2-47d6-b601-7943e92d5afe",
-    "file_url": "http://monokanri-manage.local/storage/purchase/1761090573061.png",
-    "fax_number": "0864483786",
-    "status": 1,
-    "created_at": "2025-10-22T08:50:17.922660",
-    "updated_at": "2025-10-22T08:50:27.329765",
-    "error_message": "処理中"
-  },
-  {
-    "id": "6f7351fe-c45f-4d16-bc1b-4411ab19a341",
-    "file_url": "http://monokanri-manage.local/storage/purchase/1761092005773.png",
-    "fax_number": "0864482300",
-    "status": -1,
-    "created_at": "2025-10-22T09:13:53.567249",
-    "updated_at": "2025-10-22T09:14:40.544675",
-    "error_message": "FAX送信に失敗しました"
-  },
-  {
-    "id": "d1c8469d-178c-4936-9f0e-4f2c7536efc9",
-    "file_url": "file:///uploads/print_content_20251022_100144_20251022_100159.png",
+    "id": "cdf9af64-8efb-4661-bd31-82edb841291c",
+    "file_url": "file:///uploads/print_content_20251023_090322_20251023_090346.pdf",
     "fax_number": "0864656884",
-    "status": -1,
-    "created_at": "2025-10-22T10:01:59.786798",
-    "updated_at": "2025-10-22T10:02:15.317063",
-    "error_message": "FAX送信に失敗しました"
+    "status": 1,
+    "created_at": "2025-10-23T09:03:46.378362",
+    "updated_at": "2025-10-23T09:03:55.582917",
+    "error_message": "処理中",
+    "converted_pdf_path": null
   },
   {
-    "id": "db17d60d-72ee-45e9-a08e-2a3c852cae43",
-    "file_url": "file:///uploads/print_content_20251022_100935_20251022_100952.png",
+    "id": "53378da2-a83c-4727-a91d-c75dafa256ed",
+    "file_url": "file:///uploads/print_content_20251023_090338_20251023_090353.pdf",
     "fax_number": "0864656884",
-    "status": -1,
-    "created_at": "2025-10-22T10:09:52.596850",
-    "updated_at": "2025-10-22T10:10:09.467787",
-    "error_message": "FAX送信に失敗しました"
+    "status": 1,
+    "created_at": "2025-10-23T09:03:53.535450",
+    "updated_at": "2025-10-23T09:04:06.533142",
+    "error_message": "処理中",
+    "converted_pdf_path": null
   },
   {
-    "id": "fec43754-2549-4a66-8cb7-bb6ef7e4e30e",
-    "file_url": "file:///uploads/print_content_20251022_113825_20251022_113839.png",
-    "fax_number": "0528244773",
+    "id": "230fac37-830c-4ab9-9a15-cb5e315734ad",
+    "file_url": "file:///uploads/print_content_20251023_090724_20251023_090740.pdf",
+    "fax_number": "0864656884",
     "status": 1,
-    "created_at": "2025-10-22T11:38:39.569981",
-    "updated_at": "2025-10-22T11:38:49.156515",
-    "error_message": "処理中"
-  },
-  {
-    "id": "cf7d26e8-a441-46dc-a6b5-8a4308331a73",
-    "file_url": "file:///uploads/print_content_20251022_114530_20251022_114544.png",
-    "fax_number": "0528244773",
-    "status": 1,
-    "created_at": "2025-10-22T11:45:44.705917",
-    "updated_at": "2025-10-22T11:45:53.118367",
-    "error_message": "処理中"
-  },
-  {
-    "id": "9545e6cb-9eac-47f6-a794-4523a86303cb",
-    "file_url": "file:///uploads/print_content_20251022_115547_20251022_115601.png",
-    "fax_number": "0528244773",
-    "status": 1,
-    "created_at": "2025-10-22T11:56:01.934206",
-    "updated_at": "2025-10-22T11:56:16.659517",
-    "error_message": "処理中"
-  },
-  {
-    "id": "891c654d-583d-4a15-a7d2-9375d3cedf9f",
-    "file_url": "file:///uploads/print_content_20251022_135310_20251022_135325.png",
-    "fax_number": "05068775246",
-    "status": 1,
-    "created_at": "2025-10-22T13:53:25.303360",
-    "updated_at": "2025-10-22T13:53:40.284361",
-    "error_message": "処理中"
-  },
-  {
-    "id": "f275013a-30f0-4fe8-937e-ffc2352fa44a",
-    "file_url": "http://monokanri-manage.local/storage/purchase/1761109260638.png",
-    "fax_number": "05068775246",
-    "status": 1,
-    "created_at": "2025-10-22T14:01:19.476390",
-    "updated_at": "2025-10-22T14:01:29.359716",
-    "error_message": "処理中"
-  },
-  {
-    "id": "49b1a8dc-c436-49e5-ac45-628d19737eb5",
-    "file_url": "http://monokanri-manage.local/storage/purchase/1761109260638.png",
-    "fax_number": "05068775246",
-    "status": 1,
-    "created_at": "2025-10-22T14:06:17.405156",
-    "updated_at": "2025-10-22T14:06:28.420559",
-    "error_message": "処理中"
-  },
-  {
-    "id": "d9301da3-c2f1-4886-a7a9-838390eff02b",
-    "file_url": "file:///uploads/print_content_20251022_141554_20251022_141608.png",
-    "fax_number": "05068775246",
-    "status": 1,
-    "created_at": "2025-10-22T14:16:08.976369",
-    "updated_at": "2025-10-22T14:16:17.493054",
-    "error_message": "処理中"
-  },
-  {
-    "id": "c280117b-7923-4b40-8dc8-1081e72c2e1f",
-    "file_url": "file:///uploads/print_content_20251022_141707_20251022_141721.pdf",
-    "fax_number": "05068775246",
-    "status": 1,
-    "created_at": "2025-10-22T14:17:21.938471",
-    "updated_at": "2025-10-22T14:17:31.542050",
-    "error_message": "処理中"
-  },
-  {
-    "id": "87b8fb23-2dfb-4b67-9d6e-a583ce10b34b",
-    "file_url": "http://monokanri-manage.local/storage/purchase/1761111253958.png",
-    "fax_number": "05068775246",
-    "status": 1,
-    "created_at": "2025-10-22T14:34:26.986525",
-    "updated_at": "2025-10-22T14:34:35.275711",
-    "error_message": "処理中"
-  },
-  {
-    "id": "2b4e1248-803a-4761-89c3-6241081a4b9c",
-    "file_url": "http://monokanri-manage.local/storage/purchase/1761111253958.png",
-    "fax_number": "05068775246",
-    "status": 1,
-    "created_at": "2025-10-22T14:37:19.458316",
-    "updated_at": "2025-10-22T14:37:31.047259",
-    "error_message": "処理中"
-  },
-  {
-    "id": "638b4ce8-0592-47e8-b5fc-7fd3d7e1012c",
-    "file_url": "http://monokanri-manage.local/storage/purchase/1761111253958.png",
-    "fax_number": "05068775246",
-    "status": 1,
-    "created_at": "2025-10-22T14:40:18.723999",
-    "updated_at": "2025-10-22T14:40:27.241741",
-    "error_message": "処理中"
+    "created_at": "2025-10-23T09:07:40.409034",
+    "updated_at": "2025-10-23T09:08:10.911479",
+    "error_message": "処理中",
+    "converted_pdf_path": null
   }
 ]
