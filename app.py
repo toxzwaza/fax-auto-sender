@@ -191,6 +191,11 @@ def send_fax_api():
     """FAX送信API（URL指定）"""
     try:
         data = request.get_json()
+        print("=" * 50)
+        print("[API] /send_fax - FAX送信リクエスト受信")
+        print(f"[API] 受信データ: {data}")
+        print("-" * 30)
+
         file_url = data.get('file_url')
         fax_number = data.get('fax_number')
         request_user = data.get('request_user')  # オプション
@@ -198,7 +203,15 @@ def send_fax_api():
         callback_url = data.get('callback_url')  # オプション
         order_destination = data.get('order_destination')  # オプション
 
+        print(f"[API] file_url: {file_url}")
+        print(f"[API] fax_number: {fax_number}")
+        print(f"[API] request_user: {request_user}")
+        print(f"[API] file_name: {file_name}")
+        print(f"[API] callback_url: {callback_url}")
+        print(f"[API] order_destination: {order_destination}")
+
         if not file_url or not fax_number:
+            print("[API] エラー: file_urlとfax_numberは必須です")
             return jsonify({'success': False, 'error': 'file_urlとfax_numberは必須です'}), 400
 
         new_request = add_fax_request(file_url, fax_number, request_user, file_name, callback_url, order_destination)
@@ -221,21 +234,37 @@ def send_fax_api():
 def upload_and_send_fax():
     """ファイルアップロード＆FAX送信API"""
     try:
+        print("=" * 50)
+        print("[API] /upload_and_send_fax - ファイルアップロード＆FAX送信リクエスト受信")
+        print(f"[API] 受信ファイル: {request.files}")
+        print(f"[API] 受信フォーム: {request.form}")
+        print("-" * 30)
+
         # ファイルの確認
         if 'file' not in request.files:
+            print("[API] エラー: ファイルが選択されていません")
             return jsonify({'success': False, 'error': 'ファイルが選択されていません'}), 400
-        
+
         file = request.files['file']
         fax_number = request.form.get('fax_number')
         request_user = request.form.get('request_user')  # オプション
         file_name = request.form.get('file_name')  # オプション
         callback_url = request.form.get('callback_url')  # オプション
         order_destination = request.form.get('order_destination')  # オプション
-        
+
+        print(f"[API] ファイル名: {file.filename if file else 'None'}")
+        print(f"[API] fax_number: {fax_number}")
+        print(f"[API] request_user: {request_user}")
+        print(f"[API] file_name: {file_name}")
+        print(f"[API] callback_url: {callback_url}")
+        print(f"[API] order_destination: {order_destination}")
+
         if not fax_number:
+            print("[API] エラー: fax_numberは必須です")
             return jsonify({'success': False, 'error': 'fax_numberは必須です'}), 400
-        
+
         if file.filename == '':
+            print("[API] エラー: ファイルが選択されていません")
             return jsonify({'success': False, 'error': 'ファイルが選択されていません'}), 400
         
         # ファイルを保存
@@ -270,31 +299,55 @@ def upload_and_send_fax():
 @app.route('/status/<request_id>', methods=['GET'])
 def get_request_status(request_id):
     """ステータス確認"""
+    print("=" * 50)
+    print(f"[API] /status/{request_id} - ステータス確認リクエスト")
+    print(f"[API] request_id: {request_id}")
+
     request_data = get_request_by_id(request_id)
     if request_data:
+        print(f"[API] ステータス取得成功: {request_data.get('status', '不明')}")
         return jsonify({'success': True, 'request': request_data})
+    print("[API] エラー: 該当リクエストなし")
     return jsonify({'success': False, 'error': '該当リクエストなし'}), 404
 
 @app.route('/requests', methods=['GET'])
 def get_all_requests():
     """全リクエスト一覧"""
+    print("=" * 50)
+    print("[API] /requests - 全リクエスト一覧取得")
+
     params_list = load_parameters()
+    print(f"[API] 取得件数: {len(params_list)}")
+
     return jsonify({'success': True, 'requests': params_list, 'total': len(params_list)})
 
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
+    print("=" * 50)
+    print("[API] /health - ヘルスチェック")
+
+    response = jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
+    print("[API] ヘルスチェック成功")
+    return response
 
 @app.route('/', methods=['GET'])
 def admin():
     """管理画面を表示"""
+    print("=" * 50)
+    print("[API] / - 管理画面表示")
+
+    print("[API] admin.htmlテンプレート表示")
     return render_template('admin.html')
 
 @app.route('/clear_completed', methods=['POST'])
 def clear_completed():
     """完了済みの送信履歴を削除"""
+    print("=" * 50)
+    print("[API] /clear_completed - 完了済み送信履歴削除")
+
     try:
         deleted_count = clear_completed_requests()
+        print(f"[API] 削除件数: {deleted_count}")
 
         return jsonify({
             'success': True,
@@ -302,13 +355,18 @@ def clear_completed():
             'deleted_count': deleted_count
         })
     except Exception as e:
+        print(f"[API] エラー: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/retry_errors', methods=['POST'])
 def retry_errors():
     """エラー状態の送信を再送"""
+    print("=" * 50)
+    print("[API] /retry_errors - エラー送信再送")
+
     try:
         retry_count = retry_error_requests()
+        print(f"[API] 再送件数: {retry_count}")
 
         return jsonify({
             'success': True,
@@ -316,26 +374,37 @@ def retry_errors():
             'retry_count': retry_count
         })
     except Exception as e:
+        print(f"[API] エラー: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/retry_request/<request_id>', methods=['POST'])
 def retry_request(request_id):
     """個別の送信を再送"""
+    print("=" * 50)
+    print(f"[API] /retry_request/{request_id} - 個別送信再送")
+    print(f"[API] request_id: {request_id}")
+
     try:
         success, message = retry_request_by_id(request_id)
+        print(f"[API] 結果: {'成功' if success else '失敗'} - {message}")
 
         if success:
             return jsonify({'success': True, 'message': message})
         else:
             return jsonify({'success': False, 'error': message}), 400
     except Exception as e:
+        print(f"[API] エラー: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/clear_all', methods=['POST'])
 def clear_all():
     """すべての送信履歴を削除"""
+    print("=" * 50)
+    print("[API] /clear_all - 全送信履歴削除")
+
     try:
         deleted_count = clear_all_requests()
+        print(f"[API] 削除件数: {deleted_count}")
 
         return jsonify({
             'success': True,
@@ -343,11 +412,16 @@ def clear_all():
             'deleted_count': deleted_count
         })
     except Exception as e:
+        print(f"[API] エラー: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/view_file/<request_id>', methods=['GET'])
 def view_file(request_id):
     """ファイルを表示"""
+    print("=" * 50)
+    print(f"[API] /view_file/{request_id} - ファイル表示")
+    print(f"[API] request_id: {request_id}")
+
     try:
         request_data = get_request_by_id(request_id)
         if request_data:
@@ -396,6 +470,10 @@ def view_file(request_id):
 @app.route('/view_converted_pdf/<request_id>', methods=['GET'])
 def view_converted_pdf(request_id):
     """変換されたPDFファイルを表示"""
+    print("=" * 50)
+    print(f"[API] /view_converted_pdf/{request_id} - PDF表示")
+    print(f"[API] request_id: {request_id}")
+
     try:
         request_data = get_request_by_id(request_id)
         if request_data:
@@ -421,6 +499,10 @@ def view_converted_pdf(request_id):
 @app.route('/<request_id>', methods=['GET'])
 def request_detail(request_id):
     """リクエスト詳細画面を表示"""
+    print("=" * 50)
+    print(f"[API] /{request_id} - リクエスト詳細画面")
+    print(f"[API] request_id: {request_id}")
+
     try:
         request_data = get_request_by_id(request_id)
         if request_data:

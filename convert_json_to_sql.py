@@ -22,51 +22,78 @@ def main():
     with open('parameter.json', 'r', encoding='utf-8') as f:
         data = json.load(f)
 
-    print('-- parameter.json から fax_parameters テーブルへのデータ移行SQL')
-    print(f'-- 総レコード数: {len(data)}')
+    print('parameter.json から fax_parameters テーブルへのデータ移行開始')
+    print(f'総レコード数: {len(data)}')
     print()
 
-    print('INSERT INTO fax_parameters (id, file_url, fax_number, status, created_at, updated_at, error_message, converted_pdf_path, request_user, file_name, callback_url, order_destination) VALUES')
+    # db.pyから関数をインポート
+    try:
+        from db import add_fax_request, load_parameters
+        print("db.pyのインポート成功")
+    except ImportError as e:
+        print(f"db.pyのインポート失敗: {e}")
+        print("MySQL Connectorがインストールされているか確認してください")
+        return
 
-    values = []
-    for record in data:
-        id_val = record['id']
-        file_url = record.get('file_url')
-        fax_number = record.get('fax_number')
-        status = record.get('status', 0)
-        created_at = record.get('created_at')
-        updated_at = record.get('updated_at')
-        error_message = record.get('error_message')
-        converted_pdf_path = record.get('converted_pdf_path')
+    # 既存データの確認
+    try:
+        existing_count = len(load_parameters())
+        print(f'移行前の既存レコード数: {existing_count}')
+    except Exception as e:
+        print(f"既存データ確認エラー: {e}")
+        return
 
-        # JSONに含まれていないフィールドはNULL
-        request_user = record.get('request_user')
-        file_name = record.get('file_name')
-        callback_url = record.get('callback_url')
-        order_destination = record.get('order_destination')
+    success_count = 0
+    error_count = 0
 
-        # SQLエスケープ
-        file_url_sql = escape_sql_string(file_url)
-        fax_number_sql = escape_sql_string(fax_number)
-        error_message_sql = escape_sql_string(error_message)
-        converted_pdf_path_sql = escape_sql_string(converted_pdf_path)
-        request_user_sql = escape_sql_string(request_user)
-        file_name_sql = escape_sql_string(file_name)
-        callback_url_sql = escape_sql_string(callback_url)
-        order_destination_sql = escape_sql_string(order_destination)
+    for i, record in enumerate(data, 1):
+        print(f"\n[{i}/{len(data)}] レコード処理開始")
+        print(f"   ID: {record.get('id', '不明')}")
+        print(f"   FAX番号: {record.get('fax_number', '不明')}")
+        print(f"   ステータス: {record.get('status', '不明')}")
 
-        value = f"('{id_val}', {file_url_sql}, {fax_number_sql}, {status}, '{created_at}', '{updated_at}', {error_message_sql}, {converted_pdf_path_sql}, {request_user_sql}, {file_name_sql}, {callback_url_sql}, {order_destination_sql})"
-        values.append(value)
+        try:
+            # add_fax_request関数を使用してレコードを追加
+            result = add_fax_request(
+                file_url=record.get('file_url'),
+                fax_number=record.get('fax_number'),
+                request_user=record.get('request_user'),
+                file_name=record.get('file_name'),
+                callback_url=record.get('callback_url'),
+                order_destination=record.get('order_destination')
+            )
 
-    # 各値をカンマで区切って出力
-    for i, value in enumerate(values):
-        comma = ',' if i < len(values) - 1 else ';'
-        print(f'{value}{comma}')
+            if result:
+                success_count += 1
+                print(f"[{i}] レコード追加成功: {result['id']}")
+            else:
+                error_count += 1
+                print(f"[{i}] レコード追加失敗: 結果がNone")
 
-    print()
-    print('-- 完了後、以下のコマンドで確認できます:')
-    print('-- SELECT COUNT(*) FROM fax_parameters;')
-    print('-- SELECT * FROM fax_parameters LIMIT 5;')
+        except Exception as e:
+            error_count += 1
+            print(f"[{i}] レコード追加エラー: {e}")
+            import traceback
+            traceback.print_exc()
+
+    print(f"\n{'='*60}")
+    print("移行結果サマリー")
+    print(f"処理対象: {len(data)} 件")
+    print(f"成功: {success_count} 件")
+    print(f"エラー: {error_count} 件")
+
+    # 最終確認
+    try:
+        final_count = len(load_parameters())
+        print(f"移行後の総レコード数: {final_count}")
+        print(f"追加されたレコード数: {final_count - existing_count}")
+    except Exception as e:
+        print(f"最終確認エラー: {e}")
+
+    if error_count == 0:
+        print("\n移行が完全に成功しました！")
+    else:
+        print(f"\n{error_count}件のエラーが発生しました。詳細を確認してください。")
 
 if __name__ == '__main__':
     main()

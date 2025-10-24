@@ -19,6 +19,7 @@ mycursor = mydb.cursor()
 
 def load_parameters():
     """fax_parametersテーブルから全データを読み込み"""
+    print("[load_parameters] テーブルからデータを読み込み開始")
     try:
         mycursor.execute("""
             SELECT id, file_url, fax_number, status, created_at, updated_at,
@@ -28,9 +29,11 @@ def load_parameters():
             ORDER BY created_at ASC
         """)
         rows = mycursor.fetchall()
+        print(f"[load_parameters] {len(rows)} 件のレコードを取得")
 
         # カラム名を取得
         columns = [desc[0] for desc in mycursor.description]
+        print(f"[load_parameters] カラム: {columns}")
 
         # 辞書のリストに変換
         params_list = []
@@ -44,9 +47,12 @@ def load_parameters():
                     param_dict[col] = row[i]
             params_list.append(param_dict)
 
+        print(f"[load_parameters] 辞書変換完了: {len(params_list)} 件")
         return params_list
     except Exception as e:
-        print(f"パラメータ読み込みエラー: {e}")
+        print(f"[load_parameters] エラー: {e}")
+        import traceback
+        traceback.print_exc()
         return []
 
 def save_parameters(data):
@@ -56,9 +62,16 @@ def save_parameters(data):
 
 def add_fax_request(file_url, fax_number, request_user=None, file_name=None, callback_url=None, order_destination=None):
     """新しいFAX送信リクエストを追加"""
+    print(f"[add_fax_request] 新規リクエスト追加開始: {fax_number}")
     try:
         request_id = str(uuid.uuid4())
         created_at = datetime.now()
+
+        print(f"[add_fax_request] 生成されたID: {request_id}")
+        print(f"[add_fax_request] file_url: {file_url}")
+        print(f"[add_fax_request] fax_number: {fax_number}")
+        print(f"[add_fax_request] request_user: {request_user}")
+        print(f"[add_fax_request] file_name: {file_name}")
 
         sql = """
             INSERT INTO fax_parameters
@@ -66,9 +79,12 @@ def add_fax_request(file_url, fax_number, request_user=None, file_name=None, cal
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         val = (request_id, file_url, fax_number, 0, created_at, created_at, request_user, file_name, callback_url, order_destination)
+        print(f"[add_fax_request] INSERT実行")
+        print(f"[add_fax_request] VALUES: {val}")
 
         mycursor.execute(sql, val)
         mydb.commit()
+        print(f"[add_fax_request] INSERT成功、rowcount: {mycursor.rowcount}")
 
         # 作成したレコードを辞書形式で返す
         new_request = {
@@ -86,9 +102,12 @@ def add_fax_request(file_url, fax_number, request_user=None, file_name=None, cal
             "order_destination": order_destination
         }
 
+        print(f"[add_fax_request] リクエスト作成完了: {request_id}")
         return new_request
     except Exception as e:
-        print(f"FAXリクエスト追加エラー: {e}")
+        print(f"[add_fax_request] FAXリクエスト追加エラー: {e}")
+        import traceback
+        traceback.print_exc()
         mydb.rollback()
         raise e
 
