@@ -3,16 +3,9 @@ from flask_cors import CORS
 import requests
 import os
 import json
-import time
-import threading
 import uuid
 from datetime import datetime
 from werkzeug.utils import secure_filename
-from fax_sender import send_fax_with_retry, cleanup_temp_files
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from reportlab.lib.utils import ImageReader
-from PIL import Image
 
 app = Flask(__name__)
 CORS(app) # すべてのオリジンを許可
@@ -31,8 +24,7 @@ if not os.path.exists(UPLOAD_FOLDER):
 if not os.path.exists(CONVERTED_PDF_FOLDER):
     os.makedirs(CONVERTED_PDF_FOLDER)
 
-# グローバルロックを定義（FAX送信中の並列実行を防止）
-fax_lock = threading.Lock()
+# FAX送信処理は別ファイル（fax_worker.py）で実行
 
 # -------------------------------
 # JSONデータ操作
@@ -226,6 +218,11 @@ def download_file(file_url, local_path):
 # -------------------------------
 def create_pdf_from_image(image_path, output_pdf_path):
     """画像をA4縦のPDFに貼り付けて保存（余白最小化）"""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.utils import ImageReader
+    from PIL import Image
+    
     c = canvas.Canvas(output_pdf_path, pagesize=A4)
     width, height = A4
 
@@ -263,139 +260,9 @@ def create_pdf_from_image(image_path, output_pdf_path):
     print(f"  元画像サイズ: {img_width}x{img_height}, アスペクト比: {aspect:.3f}")
     print(f"  表示サイズ: {display_width:.1f}x{display_height:.1f}, 余白: {margin}pt")
 
-# -------------------------------
-# コールバック通知
-# -------------------------------
+# コールバック通知機能はfax_worker.pyに移動
 
-def send_callback_notification(request_data):
-    """コールバックURLにGET通知を送信（成功時のみ）"""
-    callback_url = request_data.get("callback_url")
-    if not callback_url:
-        return  # callback_urlが設定されていない場合は何もしない
-    
-    try:
-        # コールバックURLにGETリクエストを送信（パラメータなし）
-        print(f"📞 コールバック通知送信: {callback_url}")
-        response = requests.get(callback_url, timeout=10)
-        response.raise_for_status()
-        print(f"✅ コールバック通知成功: ステータスコード={response.status_code}")
-        
-    except requests.exceptions.Timeout:
-        print(f"⚠ コールバック通知タイムアウト: {callback_url}")
-    except requests.exceptions.RequestException as e:
-        print(f"⚠ コールバック通知エラー: {e}")
-    except Exception as e:
-        print(f"⚠ コールバック通知処理エラー: {e}")
-
-# -------------------------------
-# FAX送信処理
-# -------------------------------
-
-def process_single_fax_request(request_data):
-    """単一のFAX送信リクエストを処理"""
-    request_id = request_data["id"]
-    file_url = request_data["file_url"]
-    fax_number = request_data["fax_number"]
-    print(f"FAX送信処理開始: ID={request_id}, FAX番号={fax_number}")
-
-    try:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        local_file_path = f"temp_fax_{timestamp}"
-
-        # 元ファイルをダウンロード
-        temp_ext = ".pdf" if file_url.lower().endswith(".pdf") else ".tmp"
-        temp_path = local_file_path + temp_ext
-        if not download_file(file_url, temp_path):
-            update_request_status(request_id, -1, f"ファイル取得に失敗: {file_url}")
-            return False
-
-        # 🟡 PDF以外の場合はPDFに変換
-        if not file_url.lower().endswith(".pdf"):
-            # 永続フォルダに変換されたPDFを保存
-            persistent_pdf_name = f"converted_{request_id}_{timestamp}.pdf"
-            persistent_pdf_path = os.path.join(CONVERTED_PDF_FOLDER, persistent_pdf_name)
-            
-            # 一時PDFを作成
-            temp_pdf_path = local_file_path + ".pdf"
-            create_pdf_from_image(temp_path, temp_pdf_path)
-            os.remove(temp_path)
-            
-            # 永続フォルダにコピー
-            import shutil
-            shutil.copy2(temp_pdf_path, persistent_pdf_path)
-            
-            send_path = temp_pdf_path
-            
-            # 変換後のPDFファイルパスを保存
-            update_request_converted_pdf(request_id, os.path.abspath(persistent_pdf_path))
-        else:
-            send_path = temp_path
-
-        # FAX送信実行
-        if send_fax_with_retry(os.path.abspath(send_path), fax_number):
-            update_request_status(request_id, 1)
-            print(f"FAX送信完了: ID={request_id}")
-            # コールバック通知を送信（成功時のみ）
-            send_callback_notification(request_data)
-            return True
-        else:
-            error_msg = "FAX送信に失敗しました"
-            update_request_status(request_id, -1, error_msg)
-            print(f"FAX送信失敗: ID={request_id}")
-            return False
-
-    except Exception as e:
-        error_msg = str(e)
-        update_request_status(request_id, -1, error_msg)
-        print(f"FAX送信処理エラー: {e}")
-        return False
-
-    finally:
-        # FAXドライバーがファイルを使用中の場合があるため、削除をリトライ
-        for f in [local_file_path + ".pdf", local_file_path + ".tmp"]:
-            if os.path.exists(f):
-                for retry in range(5):
-                    try:
-                        os.remove(f)
-                        print(f"一時ファイルを削除: {f}")
-                        break
-                    except PermissionError:
-                        print(f"⚠ ファイル使用中のため削除保留: {f} (試行 {retry+1}/5)")
-                        time.sleep(2)
-                else:
-                    print(f"⚠ ファイル削除失敗（使用中の可能性あり）: {f}")
-
-
-# -------------------------------
-# ワーカースレッド
-# -------------------------------
-
-def fax_worker():
-    """FAX送信ワーカー（順次処理）"""
-    print("FAX送信ワーカー開始（排他制御あり）")
-    while True:
-        try:
-            params_list = load_parameters()
-            if not isinstance(params_list, list):
-                time.sleep(5)
-                continue
-
-            pending = [p for p in params_list if p.get("status") == 0]
-            if pending:
-                request_data = pending[0]
-                request_id = request_data["id"]
-                update_request_status(request_id, 2, "処理中")
-
-                # 🔒 ロックでワーカー全体を排他制御
-                with fax_lock:
-                    process_single_fax_request(request_data)
-
-                time.sleep(1)
-            else:
-                time.sleep(5)
-        except Exception as e:
-            print(f"FAXワーカーエラー: {e}")
-            time.sleep(5)
+# FAX送信処理はfax_worker.pyに移動
 
 # -------------------------------
 # Flask API
@@ -731,7 +598,6 @@ def request_detail(request_id):
         return f"エラーが発生しました: {str(e)}", 500
 
 if __name__ == '__main__':
-    worker_thread = threading.Thread(target=fax_worker, daemon=True)
-    worker_thread.start()
     print("FAX送信APIサーバー起動中...")
+    print("FAX送信処理は別途 fax_worker.py を実行してください")
     app.run(debug=True, use_reloader=False, host='0.0.0.0', port=5000)
