@@ -6,6 +6,9 @@ import json
 import uuid
 from datetime import datetime
 from werkzeug.utils import secure_filename
+from db import (load_parameters, add_fax_request, update_request_status,
+                update_request_converted_pdf, get_request_by_id, clear_completed_requests,
+                retry_error_requests, retry_request_by_id, clear_all_requests)
 
 app = Flask(__name__)
 CORS(app) # すべてのオリジンを許可
@@ -27,93 +30,8 @@ if not os.path.exists(CONVERTED_PDF_FOLDER):
 # FAX送信処理は別ファイル（fax_worker.py）で実行
 
 # -------------------------------
-# JSONデータ操作
+# データベース操作（db.pyからインポート済み）
 # -------------------------------
-
-def load_parameters():
-    """parameter.jsonからデータを読み込み"""
-    try:
-        if not os.path.exists(PARAMETER_FILE):
-            return []
-        if os.path.getsize(PARAMETER_FILE) == 0:
-            print("⚠ parameter.jsonが空のため初期化します。")
-            return []
-
-        with open(PARAMETER_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            if isinstance(data, dict):
-                print("古い形式のparameter.jsonを検出。新しい形式に変換します。")
-                return []
-            return data if isinstance(data, list) else []
-    except Exception as e:
-        print(f"パラメータ読み込みエラー: {e}")
-        return []
-
-def save_parameters(data):
-    """parameter.jsonにデータを保存"""
-    try:
-        with open(PARAMETER_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        print(f"パラメータ保存エラー: {e}")
-
-def add_fax_request(file_url, fax_number, request_user=None, file_name=None, callback_url=None, order_destination=None):
-    """新しいFAX送信リクエストを追加"""
-    params_list = load_parameters()
-    
-    new_request = {
-        "id": str(uuid.uuid4()),
-        "file_url": file_url,
-        "fax_number": fax_number,
-        "status": 0,  # 0: 待機中, 1: 完了, -1: エラー, 2: 処理中
-        "created_at": datetime.now().isoformat(),
-        "updated_at": datetime.now().isoformat(),
-        "error_message": None,
-        "converted_pdf_path": None,  # PDF変換後のファイルパス
-        "request_user": request_user,  # 依頼者名
-        "file_name": file_name,  # ファイル名
-        "callback_url": callback_url,  # 通知先URL
-        "order_destination": order_destination  # 発注先
-    }
-    
-    params_list.append(new_request)
-    save_parameters(params_list)
-    
-    return new_request
-
-def update_request_status(request_id, status, error_message=None):
-    """リクエストのステータスを更新"""
-    params_list = load_parameters()
-    
-    if not isinstance(params_list, list):
-        print(f"パラメータデータが配列ではありません: {type(params_list)}")
-        return
-    
-    for request in params_list:
-        if isinstance(request, dict) and request.get("id") == request_id:
-            request["status"] = status
-            request["updated_at"] = datetime.now().isoformat()
-            if error_message:
-                request["error_message"] = error_message
-            break
-    
-    save_parameters(params_list)
-
-def update_request_converted_pdf(request_id, pdf_path):
-    """リクエストの変換後PDFファイルパスを更新"""
-    params_list = load_parameters()
-    
-    if not isinstance(params_list, list):
-        print(f"パラメータデータが配列ではありません: {type(params_list)}")
-        return
-    
-    for request in params_list:
-        if isinstance(request, dict) and request.get("id") == request_id:
-            request["converted_pdf_path"] = pdf_path
-            request["updated_at"] = datetime.now().isoformat()
-            break
-    
-    save_parameters(params_list)
 
 def try_regenerate_converted_pdf(request_id, request_data):
     """変換されたPDFファイルを再生成"""
@@ -352,10 +270,9 @@ def upload_and_send_fax():
 @app.route('/status/<request_id>', methods=['GET'])
 def get_request_status(request_id):
     """ステータス確認"""
-    params_list = load_parameters()
-    for r in params_list:
-        if r.get("id") == request_id:
-            return jsonify({'success': True, 'request': r})
+    request_data = get_request_by_id(request_id)
+    if request_data:
+        return jsonify({'success': True, 'request': request_data})
     return jsonify({'success': False, 'error': '該当リクエストなし'}), 404
 
 @app.route('/requests', methods=['GET'])
@@ -377,18 +294,10 @@ def admin():
 def clear_completed():
     """完了済みの送信履歴を削除"""
     try:
-        params_list = load_parameters()
-        if not isinstance(params_list, list):
-            return jsonify({'success': False, 'error': 'パラメータデータが配列ではありません'}), 400
-        
-        # 完了済み（status=1）のリクエストを除外
-        filtered_list = [r for r in params_list if r.get("status") != 1]
-        deleted_count = len(params_list) - len(filtered_list)
-        
-        save_parameters(filtered_list)
-        
+        deleted_count = clear_completed_requests()
+
         return jsonify({
-            'success': True, 
+            'success': True,
             'message': f'{deleted_count}件の完了済み送信履歴を削除しました',
             'deleted_count': deleted_count
         })
@@ -399,23 +308,10 @@ def clear_completed():
 def retry_errors():
     """エラー状態の送信を再送"""
     try:
-        params_list = load_parameters()
-        if not isinstance(params_list, list):
-            return jsonify({'success': False, 'error': 'パラメータデータが配列ではありません'}), 400
-        
-        # エラー状態（status=-1）のリクエストを待機中（status=0）に変更
-        retry_count = 0
-        for request in params_list:
-            if request.get("status") == -1:
-                request["status"] = 0
-                request["updated_at"] = datetime.now().isoformat()
-                request["error_message"] = None
-                retry_count += 1
-        
-        save_parameters(params_list)
-        
+        retry_count = retry_error_requests()
+
         return jsonify({
-            'success': True, 
+            'success': True,
             'message': f'{retry_count}件のエラー送信を再送しました',
             'retry_count': retry_count
         })
@@ -426,23 +322,12 @@ def retry_errors():
 def retry_request(request_id):
     """個別の送信を再送"""
     try:
-        params_list = load_parameters()
-        if not isinstance(params_list, list):
-            return jsonify({'success': False, 'error': 'パラメータデータが配列ではありません'}), 400
-        
-        # 指定されたIDのリクエストを探して再送
-        for request in params_list:
-            if request.get("id") == request_id:
-                if request.get("status") == -1:  # エラー状態の場合のみ
-                    request["status"] = 0
-                    request["updated_at"] = datetime.now().isoformat()
-                    request["error_message"] = None
-                    save_parameters(params_list)
-                    return jsonify({'success': True, 'message': '送信を再送しました'})
-                else:
-                    return jsonify({'success': False, 'error': 'エラー状態の送信のみ再送可能です'}), 400
-        
-        return jsonify({'success': False, 'error': '該当する送信が見つかりません'}), 404
+        success, message = retry_request_by_id(request_id)
+
+        if success:
+            return jsonify({'success': True, 'message': message})
+        else:
+            return jsonify({'success': False, 'error': message}), 400
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -450,15 +335,12 @@ def retry_request(request_id):
 def clear_all():
     """すべての送信履歴を削除"""
     try:
-        params_list = load_parameters()
-        total_count = len(params_list) if isinstance(params_list, list) else 0
-        
-        save_parameters([])
-        
+        deleted_count = clear_all_requests()
+
         return jsonify({
-            'success': True, 
-            'message': f'{total_count}件の送信履歴をすべて削除しました',
-            'deleted_count': total_count
+            'success': True,
+            'message': f'{deleted_count}件の送信履歴をすべて削除しました',
+            'deleted_count': deleted_count
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -467,51 +349,46 @@ def clear_all():
 def view_file(request_id):
     """ファイルを表示"""
     try:
-        params_list = load_parameters()
-        if not isinstance(params_list, list):
-            return jsonify({'success': False, 'error': 'パラメータデータが配列ではありません'}), 400
-        
-        # 指定されたIDのリクエストを探す
-        for request in params_list:
-            if request.get("id") == request_id:
-                file_url = request.get("file_url")
-                if not file_url:
-                    return jsonify({'success': False, 'error': 'ファイルURLが見つかりません'}), 404
-                
-                # ローカルファイルの場合
-                if file_url.startswith('file://'):
-                    local_file_path = file_url[7:]
-                    if local_file_path.startswith('/'):
-                        local_file_path = local_file_path[1:]
-                    
-                    if os.path.exists(local_file_path):
-                        # ファイルの拡張子に応じて適切なContent-Typeを設定
-                        ext = os.path.splitext(local_file_path)[1].lower()
-                        content_types = {
-                            '.pdf': 'application/pdf',
-                            '.png': 'image/png',
-                            '.jpg': 'image/jpeg',
-                            '.jpeg': 'image/jpeg',
-                            '.tiff': 'image/tiff',
-                            '.tif': 'image/tiff'
-                        }
-                        content_type = content_types.get(ext, 'application/octet-stream')
-                        
-                        with open(local_file_path, 'rb') as f:
-                            file_content = f.read()
-                        
-                        from flask import Response
-                        return Response(file_content, mimetype=content_type)
-                    else:
-                        print(f"ファイルが見つかりません: {local_file_path}")
-                        return jsonify({'success': False, 'error': f'ファイルが見つかりません: {os.path.basename(local_file_path)}'}), 404
-                
-                # URLファイルの場合
+        request_data = get_request_by_id(request_id)
+        if request_data:
+            file_url = request_data.get("file_url")
+            if not file_url:
+                return jsonify({'success': False, 'error': 'ファイルURLが見つかりません'}), 404
+
+            # ローカルファイルの場合
+            if file_url.startswith('file://'):
+                local_file_path = file_url[7:]
+                if local_file_path.startswith('/'):
+                    local_file_path = local_file_path[1:]
+
+                if os.path.exists(local_file_path):
+                    # ファイルの拡張子に応じて適切なContent-Typeを設定
+                    ext = os.path.splitext(local_file_path)[1].lower()
+                    content_types = {
+                        '.pdf': 'application/pdf',
+                        '.png': 'image/png',
+                        '.jpg': 'image/jpeg',
+                        '.jpeg': 'image/jpeg',
+                        '.tiff': 'image/tiff',
+                        '.tif': 'image/tiff'
+                    }
+                    content_type = content_types.get(ext, 'application/octet-stream')
+
+                    with open(local_file_path, 'rb') as f:
+                        file_content = f.read()
+
+                    from flask import Response
+                    return Response(file_content, mimetype=content_type)
                 else:
-                    # URLをそのまま返す（リダイレクト）
-                    from flask import redirect
-                    return redirect(file_url)
-        
+                    print(f"ファイルが見つかりません: {local_file_path}")
+                    return jsonify({'success': False, 'error': f'ファイルが見つかりません: {os.path.basename(local_file_path)}'}), 404
+
+            # URLファイルの場合
+            else:
+                # URLをそのまま返す（リダイレクト）
+                from flask import redirect
+                return redirect(file_url)
+
         return jsonify({'success': False, 'error': '該当する送信が見つかりません'}), 404
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -520,28 +397,23 @@ def view_file(request_id):
 def view_converted_pdf(request_id):
     """変換されたPDFファイルを表示"""
     try:
-        params_list = load_parameters()
-        if not isinstance(params_list, list):
-            return jsonify({'success': False, 'error': 'パラメータデータが配列ではありません'}), 400
-        
-        # 指定されたIDのリクエストを探す
-        for request in params_list:
-            if request.get("id") == request_id:
-                converted_pdf_path = request.get("converted_pdf_path")
-                if not converted_pdf_path:
-                    return jsonify({'success': False, 'error': '変換されたPDFファイルの情報がありません'}), 404
-                
-                if os.path.exists(converted_pdf_path):
-                    with open(converted_pdf_path, 'rb') as f:
-                        file_content = f.read()
-                    
-                    from flask import Response
-                    return Response(file_content, mimetype='application/pdf')
-                else:
-                    print(f"変換されたPDFファイルが見つかりません: {converted_pdf_path}")
-                    # ファイルが存在しない場合、元ファイルから再生成を試行
-                    return try_regenerate_converted_pdf(request_id, request)
-        
+        request_data = get_request_by_id(request_id)
+        if request_data:
+            converted_pdf_path = request_data.get("converted_pdf_path")
+            if not converted_pdf_path:
+                return jsonify({'success': False, 'error': '変換されたPDFファイルの情報がありません'}), 404
+
+            if os.path.exists(converted_pdf_path):
+                with open(converted_pdf_path, 'rb') as f:
+                    file_content = f.read()
+
+                from flask import Response
+                return Response(file_content, mimetype='application/pdf')
+            else:
+                print(f"変換されたPDFファイルが見つかりません: {converted_pdf_path}")
+                # ファイルが存在しない場合、元ファイルから再生成を試行
+                return try_regenerate_converted_pdf(request_id, request_data)
+
         return jsonify({'success': False, 'error': '該当する送信が見つかりません'}), 404
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -550,49 +422,44 @@ def view_converted_pdf(request_id):
 def request_detail(request_id):
     """リクエスト詳細画面を表示"""
     try:
-        params_list = load_parameters()
-        if not isinstance(params_list, list):
-            return "パラメータデータが配列ではありません", 400
-        
-        # 指定されたIDのリクエストを探す
-        for request_data in params_list:
-            if request_data.get("id") == request_id:
-                # ステータステキストとクラスを取得
-                status = request_data.get("status")
-                status_map = {
-                    0: ("待機中", "status-pending"),
-                    1: ("完了", "status-completed"),
-                    2: ("処理中", "status-processing"),
-                    -1: ("エラー", "status-error")
-                }
-                status_text, status_class = status_map.get(status, ("不明", ""))
-                
-                # 日時をフォーマット
-                from datetime import datetime
-                created_at = datetime.fromisoformat(request_data.get("created_at")).strftime("%Y年%m月%d日 %H:%M:%S") if request_data.get("created_at") else "不明"
-                updated_at = datetime.fromisoformat(request_data.get("updated_at")).strftime("%Y年%m月%d日 %H:%M:%S") if request_data.get("updated_at") else "不明"
-                
-                # 元ファイルの存在確認
-                file_url = request_data.get("file_url")
-                has_original_file = False
-                if file_url:
-                    if file_url.startswith('file://'):
-                        local_file_path = file_url[7:]
-                        if local_file_path.startswith('/'):
-                            local_file_path = local_file_path[1:]
-                        has_original_file = os.path.exists(local_file_path)
-                    else:
-                        has_original_file = True  # URLの場合は存在すると仮定
-                
-                return render_template('detail.html',
-                    request_data=request_data,
-                    status_text=status_text,
-                    status_class=status_class,
-                    created_at=created_at,
-                    updated_at=updated_at,
-                    has_original_file=has_original_file
-                )
-        
+        request_data = get_request_by_id(request_id)
+        if request_data:
+            # ステータステキストとクラスを取得
+            status = request_data.get("status")
+            status_map = {
+                0: ("待機中", "status-pending"),
+                1: ("完了", "status-completed"),
+                2: ("処理中", "status-processing"),
+                -1: ("エラー", "status-error")
+            }
+            status_text, status_class = status_map.get(status, ("不明", ""))
+
+            # 日時をフォーマット
+            from datetime import datetime
+            created_at = datetime.fromisoformat(request_data.get("created_at")).strftime("%Y年%m月%d日 %H:%M:%S") if request_data.get("created_at") else "不明"
+            updated_at = datetime.fromisoformat(request_data.get("updated_at")).strftime("%Y年%m月%d日 %H:%M:%S") if request_data.get("updated_at") else "不明"
+
+            # 元ファイルの存在確認
+            file_url = request_data.get("file_url")
+            has_original_file = False
+            if file_url:
+                if file_url.startswith('file://'):
+                    local_file_path = file_url[7:]
+                    if local_file_path.startswith('/'):
+                        local_file_path = local_file_path[1:]
+                    has_original_file = os.path.exists(local_file_path)
+                else:
+                    has_original_file = True  # URLの場合は存在すると仮定
+
+            return render_template('detail.html',
+                request_data=request_data,
+                status_text=status_text,
+                status_class=status_class,
+                created_at=created_at,
+                updated_at=updated_at,
+                has_original_file=has_original_file
+            )
+
         return "該当するリクエストが見つかりません", 404
     except Exception as e:
         return f"エラーが発生しました: {str(e)}", 500

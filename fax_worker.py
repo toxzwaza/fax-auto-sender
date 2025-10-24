@@ -18,9 +18,10 @@ from reportlab.lib.utils import ImageReader
 from PIL import Image
 import requests
 import shutil
+from db import (load_parameters, add_fax_request, update_request_status,
+                update_request_converted_pdf, send_callback_notification)
 
 # 設定
-PARAMETER_FILE = "parameter.json"
 CONVERTED_PDF_FOLDER = "converted_pdfs"
 
 # フォルダを作成
@@ -31,69 +32,8 @@ if not os.path.exists(CONVERTED_PDF_FOLDER):
 fax_lock = threading.Lock()
 
 # -------------------------------
-# JSONデータ操作
+# データベース操作（db.pyからインポート済み）
 # -------------------------------
-
-def load_parameters():
-    """parameter.jsonからデータを読み込み"""
-    try:
-        if not os.path.exists(PARAMETER_FILE):
-            return []
-        if os.path.getsize(PARAMETER_FILE) == 0:
-            print("⚠ parameter.jsonが空のため初期化します。")
-            return []
-
-        with open(PARAMETER_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            if isinstance(data, dict):
-                print("古い形式のparameter.jsonを検出。新しい形式に変換します。")
-                return []
-            return data if isinstance(data, list) else []
-    except Exception as e:
-        print(f"パラメータ読み込みエラー: {e}")
-        return []
-
-def save_parameters(data):
-    """parameter.jsonにデータを保存"""
-    try:
-        with open(PARAMETER_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        print(f"パラメータ保存エラー: {e}")
-
-def update_request_status(request_id, status, error_message=None):
-    """リクエストのステータスを更新"""
-    params_list = load_parameters()
-    
-    if not isinstance(params_list, list):
-        print(f"パラメータデータが配列ではありません: {type(params_list)}")
-        return
-    
-    for request in params_list:
-        if isinstance(request, dict) and request.get("id") == request_id:
-            request["status"] = status
-            request["updated_at"] = datetime.now().isoformat()
-            if error_message:
-                request["error_message"] = error_message
-            break
-    
-    save_parameters(params_list)
-
-def update_request_converted_pdf(request_id, pdf_path):
-    """リクエストの変換後PDFファイルパスを更新"""
-    params_list = load_parameters()
-    
-    if not isinstance(params_list, list):
-        print(f"パラメータデータが配列ではありません: {type(params_list)}")
-        return
-    
-    for request in params_list:
-        if isinstance(request, dict) and request.get("id") == request_id:
-            request["converted_pdf_path"] = pdf_path
-            request["updated_at"] = datetime.now().isoformat()
-            break
-    
-    save_parameters(params_list)
 
 # -------------------------------
 # ファイル処理
@@ -166,29 +106,7 @@ def create_pdf_from_image(image_path, output_pdf_path):
     print(f"  元画像サイズ: {img_width}x{img_height}, アスペクト比: {aspect:.3f}")
     print(f"  表示サイズ: {display_width:.1f}x{display_height:.1f}, 余白: {margin}pt")
 
-# -------------------------------
-# コールバック通知
-# -------------------------------
-
-def send_callback_notification(request_data):
-    """コールバックURLにGET通知を送信（成功時のみ）"""
-    callback_url = request_data.get("callback_url")
-    if not callback_url:
-        return  # callback_urlが設定されていない場合は何もしない
-    
-    try:
-        # コールバックURLにGETリクエストを送信（パラメータなし）
-        print(f"📞 コールバック通知送信: {callback_url}")
-        response = requests.get(callback_url, timeout=10)
-        response.raise_for_status()
-        print(f"✅ コールバック通知成功: ステータスコード={response.status_code}")
-        
-    except requests.exceptions.Timeout:
-        print(f"⚠ コールバック通知タイムアウト: {callback_url}")
-    except requests.exceptions.RequestException as e:
-        print(f"⚠ コールバック通知エラー: {e}")
-    except Exception as e:
-        print(f"⚠ コールバック通知処理エラー: {e}")
+# コールバック通知機能はdb.pyに移動
 
 # -------------------------------
 # FAX送信処理

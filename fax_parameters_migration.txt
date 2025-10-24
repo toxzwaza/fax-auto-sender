@@ -1,0 +1,97 @@
+-- FAX送信パラメータテーブル作成SQL
+-- MySQL用
+
+CREATE TABLE fax_parameters (
+    id VARCHAR(36) PRIMARY KEY COMMENT 'UUID',
+    file_url TEXT COMMENT 'ファイルURL',
+    fax_number VARCHAR(20) COMMENT 'FAX番号',
+    status INT DEFAULT 0 COMMENT 'ステータス（0:待機中, 1:完了, 2:処理中, -1:エラー）',
+    created_at DATETIME COMMENT '作成日時',
+    updated_at DATETIME COMMENT '更新日時',
+    error_message TEXT COMMENT 'エラーメッセージ',
+    converted_pdf_path TEXT COMMENT '変換後PDFファイルパス',
+    request_user VARCHAR(100) COMMENT '依頼者名',
+    file_name VARCHAR(255) COMMENT 'ファイル名',
+    callback_url TEXT COMMENT 'コールバックURL',
+    order_destination VARCHAR(100) COMMENT '発注先'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='FAX送信パラメータ管理テーブル';
+
+-- パフォーマンス向上のためのインデックス
+CREATE INDEX idx_status ON fax_parameters(status) COMMENT 'ステータス検索用インデックス';
+CREATE INDEX idx_created_at ON fax_parameters(created_at) COMMENT '作成日時ソート用インデックス';
+CREATE INDEX idx_fax_number ON fax_parameters(fax_number) COMMENT 'FAX番号検索用インデックス';
+CREATE INDEX idx_request_user ON fax_parameters(request_user) COMMENT '依頼者検索用インデックス';
+
+-- 複合インデックス（必要に応じて）
+CREATE INDEX idx_status_created ON fax_parameters(status, created_at) COMMENT 'ステータス+作成日時複合インデックス';
+
+
+-- =============================================================================
+-- Laravel Migration File (PHP)
+-- =============================================================================
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class CreateFaxParametersTable extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('fax_parameters', function (Blueprint $table) {
+            // UUID形式の主キー（auto incrementなし）
+            $table->string('id', 36)->primary()->comment('UUID');
+
+            // FAX送信関連情報
+            $table->text('file_url')->nullable()->comment('ファイルURL');
+            $table->string('fax_number', 20)->nullable()->comment('FAX番号');
+
+            // ステータス（0:待機中, 1:完了, 2:処理中, -1:エラー）
+            $table->integer('status')->default(0)->comment('ステータス');
+
+            // タイムスタンプ（Laravel自動生成）
+            $table->timestamps();
+
+            // エラー情報
+            $table->text('error_message')->nullable()->comment('エラーメッセージ');
+
+            // ファイル関連情報
+            $table->text('converted_pdf_path')->nullable()->comment('変換後PDFファイルパス');
+            $table->string('file_name', 255)->nullable()->comment('ファイル名');
+
+            // ユーザー関連情報
+            $table->string('request_user', 100)->nullable()->comment('依頼者名');
+            $table->string('order_destination', 100)->nullable()->comment('発注先');
+
+            // コールバック情報
+            $table->text('callback_url')->nullable()->comment('コールバックURL');
+
+            // インデックス（パフォーマンス向上）
+            $table->index('status', 'idx_status');
+            $table->index('created_at', 'idx_created_at');
+            $table->index('fax_number', 'idx_fax_number');
+            $table->index('request_user', 'idx_request_user');
+            $table->index(['status', 'created_at'], 'idx_status_created');
+
+            // テーブルコメント
+            $table->comment('FAX送信パラメータ管理テーブル');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists('fax_parameters');
+    }
+}

@@ -1,8 +1,9 @@
-# FAX送信API（非同期版・分離構成）
+# FAX送信API（非同期版・分離構成・DB連携）
 
 Flaskを使用した非同期FAX送信APIです。ファイルURLとFAX番号を受け取り、バックグラウンドでFAX送信を実行します。
 
-**🆕 分離構成**: APIサーバーとFAX送信ワーカーが別々のプロセスで動作します。
+**🆕 分離構成**: APIサーバーとFAX送信ワーカーが別々のプロセスで動作
+**🆕 DB連携**: MySQLデータベースを使用したデータ永続化
 
 ## 機能
 
@@ -17,11 +18,37 @@ Flaskを使用した非同期FAX送信APIです。ファイルURLとFAX番号を
 - **🆕 画像ファイルの自動PDF変換**（PNG, JPG, TIFF対応）
 - **🆕 Web管理画面**（リクエスト一覧、再送、削除機能）
 - **🆕 分離構成**（APIサーバーとFAXワーカーの独立実行）
+- **🆕 DB連携**（MySQLデータベースを使用した永続化）
 
 ## インストール
 
 ```bash
 pip install -r requirements.txt
+```
+
+## データベース設定
+
+MySQLデータベースを使用します。`fax_parameters`テーブルが必要です。
+
+```sql
+CREATE TABLE fax_parameters (
+    id VARCHAR(36) PRIMARY KEY,
+    file_url TEXT,
+    fax_number VARCHAR(20),
+    status INT DEFAULT 0,
+    created_at DATETIME,
+    updated_at DATETIME,
+    error_message TEXT,
+    converted_pdf_path TEXT,
+    request_user VARCHAR(100),
+    file_name VARCHAR(255),
+    callback_url TEXT,
+    order_destination VARCHAR(100)
+);
+
+-- インデックス作成（パフォーマンス向上）
+CREATE INDEX idx_status ON fax_parameters(status);
+CREATE INDEX idx_created_at ON fax_parameters(created_at);
 ```
 
 ## 使用方法
@@ -195,6 +222,13 @@ python test_detail_page.py
 
 詳細画面の表示機能をテストし、アクセスURLを表示します。
 
+#### データベース移行テスト
+```bash
+python test_db_migration.py
+```
+
+MySQLデータベースへの移行が正常に行われているかテストします。
+
 ### 詳細なAPI仕様
 
 詳細なAPI仕様書は [API_SPEC.md](./API_SPEC.md) を参照してください。
@@ -205,6 +239,22 @@ python test_detail_page.py
 - 使用例（Python、cURL）
 
 ## 設定
+
+### データベース設定
+
+`db.py`ファイル内の接続情報を環境に合わせて変更してください：
+
+```python
+mydb = mysql.connector.connect(
+  host="your-host",
+  port="3306",
+  user="your-username",
+  password="your-password",
+  database="your-database"
+)
+```
+
+### その他の設定
 
 - FAXドライバー名: `FX 5570 FAX Driver`
 - ポート: `5000`
