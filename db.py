@@ -1,6 +1,7 @@
 import mysql.connector
 from datetime import datetime
 import uuid
+import requests
 
 # MySQLに接続
 mydb = mysql.connector.connect(
@@ -255,3 +256,39 @@ if __name__ == "__main__":
 
     for x in myresult:
         print(x)
+
+
+def send_callback_notification(request_data):
+    """FAX送信成功時にコールバック通知を送信"""
+    try:
+        callback_url = request_data.get("callback_url")
+        if not callback_url:
+            print(f"[send_callback_notification] コールバックURLが設定されていないためスキップ: ID={request_data.get('id')}")
+            return
+
+        print(f"[send_callback_notification] コールバック通知送信開始: {callback_url}")
+
+        # 送信するデータを作成
+        callback_data = {
+            "id": request_data.get("id"),
+            "status": "completed",
+            "fax_number": request_data.get("fax_number"),
+            "file_url": request_data.get("file_url"),
+            "file_name": request_data.get("file_name"),
+            "request_user": request_data.get("request_user"),
+            "order_destination": request_data.get("order_destination"),
+            "created_at": request_data.get("created_at"),
+            "completed_at": datetime.now().isoformat(),
+            "converted_pdf_path": request_data.get("converted_pdf_path")
+        }
+
+        # POSTリクエストを送信
+        response = requests.post(callback_url, json=callback_data, timeout=30)
+
+        if response.status_code == 200:
+            print(f"[send_callback_notification] コールバック通知送信成功: HTTP {response.status_code}")
+        else:
+            print(f"[send_callback_notification] コールバック通知送信失敗: HTTP {response.status_code} - {response.text}")
+
+    except Exception as e:
+        print(f"[send_callback_notification] コールバック通知送信エラー: {e}")
