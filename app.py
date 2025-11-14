@@ -218,7 +218,7 @@ def send_fax_api():
         return jsonify({
             'success': True,
             'message': 'FAX送信リクエストを登録しました',
-            'request_id': new_request['id'],  # 後方互換性のため
+            'fax_parameter_id': new_request['id'],  # 後方互換性のため
             'status': 'pending',
             'request_user': new_request.get('request_user'),
             'file_name': new_request.get('file_name'),
