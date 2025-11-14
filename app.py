@@ -8,7 +8,8 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 from db import (load_parameters, add_fax_request, update_request_status,
                 update_request_converted_pdf, get_request_by_id, clear_completed_requests,
-                retry_error_requests, retry_request_by_id, clear_all_requests)
+                retry_error_requests, retry_request_by_id, clear_all_requests,
+                get_initial_order_id, update_fax_parameter_id)
 
 app = Flask(__name__)
 CORS(app) # すべてのオリジンを許可
@@ -202,6 +203,7 @@ def send_fax_api():
         file_name = data.get('file_name')  # オプション
         callback_url = data.get('callback_url')  # オプション
         order_destination = data.get('order_destination')  # オプション
+        initial_order_id = data.get('initial_order_id')  # オプション
 
         print(f"[API] file_url: {file_url}")
         print(f"[API] fax_number: {fax_number}")
@@ -209,12 +211,27 @@ def send_fax_api():
         print(f"[API] file_name: {file_name}")
         print(f"[API] callback_url: {callback_url}")
         print(f"[API] order_destination: {order_destination}")
+        print(f"[API] initial_order_id: {initial_order_id}")
 
         if not file_url or not fax_number:
             print("[API] エラー: file_urlとfax_numberは必須です")
             return jsonify({'success': False, 'error': 'file_urlとfax_numberは必須です'}), 400
 
         new_request = add_fax_request(file_url, fax_number, request_user, file_name, callback_url, order_destination)
+
+        # initial_order_idが指定されている場合は、initial_ordersテーブルからデータを取得してfax_parameter_idを更新
+        if initial_order_id:
+            print(f"[API] initial_order_idが指定されました: {initial_order_id}")
+            initial_order_data = get_initial_order_id(initial_order_id)
+            if initial_order_data:
+                print(f"[API] initial_ordersから取得したID: {initial_order_data}")
+                update_success = update_fax_parameter_id(new_request['id'], initial_order_data)
+                if update_success:
+                    print(f"[API] fax_parameter_idを更新しました: {new_request['id']} -> {initial_order_data}")
+                else:
+                    print(f"[API] fax_parameter_idの更新に失敗しました")
+            else:
+                print(f"[API] initial_ordersテーブルに該当するデータが見つかりません: {initial_order_id}")
         return jsonify({
             'success': True,
             'message': 'FAX送信リクエストを登録しました',

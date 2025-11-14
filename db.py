@@ -28,7 +28,7 @@ def load_parameters():
                 cur.execute("""
                     SELECT id, file_url, fax_number, status, created_at, updated_at,
                            error_message, converted_pdf_path, request_user, file_name,
-                           callback_url, order_destination
+                           callback_url, order_destination, fax_parameter_id
                     FROM fax_parameters
                     ORDER BY created_at ASC
                 """)
@@ -58,9 +58,9 @@ def add_fax_request(file_url, fax_number, request_user=None, file_name=None, cal
             with conn.cursor() as cur:
                 cur.execute("""
                     INSERT INTO fax_parameters
-                    (id, file_url, fax_number, status, created_at, updated_at, request_user, file_name, callback_url, order_destination)
-                    VALUES (%s, %s, %s, 0, %s, %s, %s, %s, %s, %s)
-                """, (request_id, file_url, fax_number, now, now, request_user, file_name, callback_url, order_destination))
+                    (id, file_url, fax_number, status, created_at, updated_at, request_user, file_name, callback_url, order_destination, fax_parameter_id)
+                    VALUES (%s, %s, %s, 0, %s, %s, %s, %s, %s, %s, %s)
+                """, (request_id, file_url, fax_number, now, now, request_user, file_name, callback_url, order_destination, None))
                 conn.commit()
 
         return {
@@ -75,7 +75,8 @@ def add_fax_request(file_url, fax_number, request_user=None, file_name=None, cal
             "request_user": request_user,
             "file_name": file_name,
             "callback_url": callback_url,
-            "order_destination": order_destination
+            "order_destination": order_destination,
+            "fax_parameter_id": None
         }
     except Exception as e:
         print(f"[add_fax_request] エラー: {e}")
@@ -119,7 +120,7 @@ def get_request_by_id(request_id):
                 cur.execute("""
                     SELECT id, file_url, fax_number, status, created_at, updated_at,
                            error_message, converted_pdf_path, request_user, file_name,
-                           callback_url, order_destination
+                           callback_url, order_destination, fax_parameter_id
                     FROM fax_parameters WHERE id=%s
                 """, (request_id,))
                 row = cur.fetchone()
@@ -129,7 +130,7 @@ def get_request_by_id(request_id):
 
         columns = ["id", "file_url", "fax_number", "status", "created_at", "updated_at",
                    "error_message", "converted_pdf_path", "request_user", "file_name",
-                   "callback_url", "order_destination"]
+                   "callback_url", "order_destination", "fax_parameter_id"]
 
         return {
             col: (val.isoformat() if isinstance(val, datetime) else val)
@@ -210,3 +211,33 @@ def clear_all_requests():
     except Exception as e:
         print(f"[clear_all_requests] エラー: {e}")
         raise e
+
+
+def get_initial_order_id(initial_order_id):
+    """initial_ordersテーブルから指定IDのデータを取得"""
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT id FROM initial_orders WHERE id = %s", (initial_order_id,))
+                row = cur.fetchone()
+                return row[0] if row else None
+    except Exception as e:
+        print(f"[get_initial_order_id] エラー: {e}")
+        return None
+
+
+def update_fax_parameter_id(fax_request_id, fax_parameter_id):
+    """fax_parametersテーブルのfax_parameter_idを更新"""
+    try:
+        now = datetime.now()
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE fax_parameters SET fax_parameter_id=%s, updated_at=%s WHERE id=%s",
+                    (fax_parameter_id, now, fax_request_id)
+                )
+                conn.commit()
+                return cur.rowcount > 0
+    except Exception as e:
+        print(f"[update_fax_parameter_id] エラー: {e}")
+        return False

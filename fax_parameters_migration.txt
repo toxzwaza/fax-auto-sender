@@ -13,7 +13,8 @@ CREATE TABLE fax_parameters (
     request_user VARCHAR(100) COMMENT '依頼者名',
     file_name VARCHAR(255) COMMENT 'ファイル名',
     callback_url TEXT COMMENT 'コールバックURL',
-    order_destination VARCHAR(100) COMMENT '発注先'
+    order_destination VARCHAR(100) COMMENT '発注先',
+    fax_parameter_id VARCHAR(36) COMMENT 'initial_ordersテーブルのID'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='FAX送信パラメータ管理テーブル';
 
 -- パフォーマンス向上のためのインデックス
@@ -72,6 +73,9 @@ class CreateFaxParametersTable extends Migration
 
             // コールバック情報
             $table->text('callback_url')->nullable()->comment('コールバックURL');
+
+            // initial_ordersテーブルとの関連
+            $table->string('fax_parameter_id', 36)->nullable()->comment('initial_ordersテーブルのID');
 
             // インデックス（パフォーマンス向上）
             $table->index('status', 'idx_status');
